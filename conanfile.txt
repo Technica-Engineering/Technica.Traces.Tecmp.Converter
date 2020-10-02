@@ -1,0 +1,6 @@
+[requires]
+winpcap/4.1.3@bincrafters/stable
+
+[generators]
+txt
+cmake
