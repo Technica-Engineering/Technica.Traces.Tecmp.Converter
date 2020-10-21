@@ -14,8 +14,7 @@ endif()
 
 include(cmake/libtecmp.cmake)
 include(cmake/pcapng.cmake)
-include(conanbuildinfo.cmake)
-conan_basic_setup(TARGETS)
+include(cmake/libpcap.cmake)
 
 # Let's nicely support folders in IDEs
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
