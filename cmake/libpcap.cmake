@@ -20,6 +20,6 @@ else()
 
     find_library(PCAP_LIBRARY pcap)
     find_path(PCAP_INCLUDE_DIRS pcap.h)
-    target_link_libraries(PCAP_LIBRARY INTERFACE PCAP_INCLUDE_DIRS)
+    target_include_directories(PCAP_LIBRARY INTERFACE PCAP_INCLUDE_DIRS)
 
 endif()
