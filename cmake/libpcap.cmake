@@ -1,7 +1,5 @@
 
-find_package(PCAP QUIET)
-
-if (WIN32 AND NOT PCAP_FOUND)
+if (WIN32)
     # Download automatically, you can also just copy the conan.cmake file
     if(NOT EXISTS "${CMAKE_BINARY_DIR}/conan.cmake")
        message(STATUS "Downloading conan.cmake from https://github.com/conan-io/cmake-conan")
@@ -20,6 +18,8 @@ if (WIN32 AND NOT PCAP_FOUND)
 
 else()
 
-    find_package(PCAP REQUIRED)
+    find_library(PCAP_LIBRARY pcap)
+    find_path(PCAP_INCLUDE_DIRS pcap.h)
+    target_link_libraries(PCAP_LIBRARY INTERFACE PCAP_INCLUDE_DIRS)
 
 endif()
