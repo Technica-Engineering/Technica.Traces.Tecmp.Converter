@@ -20,9 +20,7 @@ include(cmake/libpcap.cmake)
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
 add_executable(pcap_converter "src/app.cpp" "src/endianness.h")
-target_link_libraries(pcap_converter tecmp_library)
-target_link_libraries(pcap_converter light_pcapng_static)
-target_link_libraries(pcap_converter CONAN_PKG::winpcap)
+target_link_libraries(pcap_converter tecmp_library light_pcapng_static PCAP_LIBRARY)
 
 if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
     # Testing
@@ -31,7 +29,6 @@ endif()
 
 if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME AND BUILD_TESTING)
     
-
     # pcapng files tests
     list(APPEND pcapng_tests "caneth")
     list(APPEND pcapng_tests "tecmp_can_message")
