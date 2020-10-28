@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.12)
 
-project(pcap_converter CXX)
+project(pcap_converter)
 
 if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
     if(NOT CMAKE_BUILD_TYPE)
@@ -12,6 +12,7 @@ endif()
 
 # Configuration
 
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
 include(cmake/libtecmp.cmake)
 include(cmake/pcapng.cmake)
 include(cmake/libpcap.cmake)
@@ -20,7 +21,7 @@ include(cmake/libpcap.cmake)
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
 add_executable(pcap_converter "src/app.cpp" "src/endianness.h")
-target_link_libraries(pcap_converter tecmp_library light_pcapng_static PCAP_LIBRARY)
+target_link_libraries(pcap_converter tecmp_library light_pcapng_static libpcap)
 
 if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
     # Testing

@@ -9,5 +9,3 @@ FetchContent_Declare(
 )
 
 FetchContent_MakeAvailable(pcapng)
-
-include_directories(${pcapng_SOURCE_DIR}/include)

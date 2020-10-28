@@ -1,25 +1,27 @@
 
 if (WIN32)
-    # Download automatically, you can also just copy the conan.cmake file
-    if(NOT EXISTS "${CMAKE_BINARY_DIR}/conan.cmake")
-       message(STATUS "Downloading conan.cmake from https://github.com/conan-io/cmake-conan")
-       file(DOWNLOAD "https://github.com/conan-io/cmake-conan/raw/v0.15/conan.cmake"
-                     "${CMAKE_BINARY_DIR}/conan.cmake" 
-                     TLS_VERIFY ON)
+    include(FetchContent)
+    FetchContent_Declare(
+        winpcap
+        URL https://www.winpcap.org/install/bin/WpdPack_4_1_2.zip
+    )
+
+    FetchContent_MakeAvailable(winpcap)
+
+    if (${CMAKE_SIZEOF_VOID_P} EQUAL 8)
+        # On x64 windows, we should look for the .lib at /lib/x64/
+        # as this is the default path for the WinPcap developer's pack
+        list(APPEND CMAKE_PREFIX_PATH "${winpcap_SOURCE_DIR}/lib/x64/")
     endif()
-    include(${CMAKE_BINARY_DIR}/conan.cmake)
-
-    conan_cmake_run(REQUIRES winpcap/4.1.3@bincrafters/stable
-                    BASIC_SETUP CMAKE_TARGETS
-                    BUILD missing)
     
-    add_library(PCAP_LIBRARY INTERFACE IMPORTED)
-    target_link_libraries(PCAP_LIBRARY INTERFACE CONAN_PKG::winpcap)
-
-else()
-
-    find_library(PCAP_LIBRARY pcap)
-    find_path(PCAP_INCLUDE_DIRS pcap.h)
-    target_include_directories(PCAP_LIBRARY INTERFACE PCAP_INCLUDE_DIRS)
+    list(APPEND CMAKE_PREFIX_PATH "${winpcap_SOURCE_DIR}")
 
 endif()
+
+find_path(PCAP_INCLUDE_DIR NAMES pcap.h)
+find_library(PCAP_LIBRARY NAMES pcap wpcap)
+
+message(${PCAP_LIBRARY})
+add_library(libpcap UNKNOWN IMPORTED)
+SET_PROPERTY(TARGET libpcap PROPERTY IMPORTED_LOCATION "${PCAP_LIBRARY}")
+target_include_directories(libpcap INTERFACE "${PCAP_INCLUDE_DIR}")
