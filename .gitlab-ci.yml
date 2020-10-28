@@ -18,7 +18,7 @@ windows:
 linux:
   before_script:
     - apt-get update -y
-    - apt-get install -y libpcap
+    - apt-get install -y libpcap-dev
   extends: .test
   tags:
     - docker
