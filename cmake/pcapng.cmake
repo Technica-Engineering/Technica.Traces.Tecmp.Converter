@@ -4,10 +4,8 @@ include(FetchContent)
 
 FetchContent_Declare(
   pcapng
-  GIT_REPOSITORY    https://git.ad.technica-engineering.de/akaanich/LightPcapNg.git
-  GIT_TAG            dfc8e0be
+  GIT_REPOSITORY    https://github.com/Technica-Engineering/LightPcapNg.git
+  GIT_TAG           f97a5a0
 )
 
 FetchContent_MakeAvailable(pcapng)
-
-include_directories(${pcapng_SOURCE_DIR}/include)

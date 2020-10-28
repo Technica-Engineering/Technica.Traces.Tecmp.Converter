@@ -4,10 +4,8 @@ include(FetchContent)
 
 FetchContent_Declare(
   libtecmp
-  GIT_REPOSITORY    https://git.ad.technica-engineering.de/akaanich/libtecmp.git
-  GIT_TAG           90d7423d
+  GIT_REPOSITORY    https://github.com/Technica-Engineering/libtecmp.git
+  GIT_TAG           b4a480c
 )
 
 FetchContent_MakeAvailable(libtecmp)
-
-include_directories(${libtecmp_SOURCE_DIR}/include/)
