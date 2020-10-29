@@ -73,8 +73,8 @@ int main(int argc, char* argv[]) {
 					// append packet_interface info
 					packet_interface.name = (char*)std::to_string(header.channel_id).c_str();
 					packet_interface.description = (char*)std::to_string(header.channel_id).c_str();
-					packet_header.timestamp.tv_sec = header._timestamp / NANOS_PER_SEC;
-					packet_header.timestamp.tv_nsec = header._timestamp % NANOS_PER_SEC;
+					packet_interface.timestamp_resolution = NANOS_PER_SEC;
+					packet_header.timestamp = tecmp_get_timespec(header);
 
 					// append packet_header info
 					// in case of can or ethernet packets, drop tecmp header
@@ -152,8 +152,8 @@ int main(int argc, char* argv[]) {
 					// append packet_interface info
 					packet_interface.name = (char*)std::to_string(header.channel_id).c_str();
 					packet_interface.description = (char*)std::to_string(header.channel_id).c_str();
-					packet_header.timestamp.tv_sec = header._timestamp / NANOS_PER_SEC;
-					packet_header.timestamp.tv_nsec = header._timestamp % NANOS_PER_SEC;
+					packet_interface.timestamp_resolution = NANOS_PER_SEC;
+					packet_header.timestamp = tecmp_get_timespec(header);
 
 					// append packet_header info
 					// in case of can or ethernet packets, drop tecmp header
