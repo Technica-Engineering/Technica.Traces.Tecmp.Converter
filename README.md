@@ -1,3 +1,6 @@
+![](https://img.shields.io/github/workflow/status/Technica-Engineering/Technica.Traces.Pcap.Converter/CMake)
+![](https://img.shields.io/github/license/Technica-Engineering/Technica.Traces.Pcap.Converter)
+
 # Technica.Traces.Pcap.Converter
 
 This tool is intended for converting TECMP packets to plain PCAPNG packets.
