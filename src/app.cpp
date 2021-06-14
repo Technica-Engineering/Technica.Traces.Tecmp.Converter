@@ -1,5 +1,5 @@
 /*
-	Copyright (c) 2020 Technica Engineering GmbH
+	Copyright (c) 2020-2021 Technica Engineering GmbH
 	GNU General Public License v3.0+ (see LICENSE or https://www.gnu.org/licenses/gpl-3.0.txt)
 */
 
@@ -29,6 +29,18 @@
 #define PCAP_MAGIC_NUMBER 0xA1B2C3D4
 #define PCAP_MAGIC_NUMBER_LITTLE_ENDIAN 0xD4C3B2A1
 
+#if _WIN32
+#define strdup _strdup
+#endif
+
+char* get_interface_name(uint32_t channel_id) {
+	std::stringstream sstream;
+	sstream << std::hex << channel_id;
+	std::string hex_channel = sstream.str();
+	char* tmp = strdup(hex_channel.c_str());
+	return tmp;
+}
+
 int main(int argc, char* argv[]) {
 	if (argc != 3) {
 		fprintf(stderr, "Usage %s [infile] [outfile]\n", argv[0]);
@@ -39,8 +51,8 @@ int main(int argc, char* argv[]) {
 	std::ifstream file_check;
 	file_check.open(argv[1], std::ios::binary | std::ios::in);
 	file_check.read((char*)&x, 4);
-
 	file_check.close();
+
 	if (x == PCAP_NG_MAGIC_NUMBER) {
 		light_pcapng infile = light_pcapng_open(argv[1], "rb");
 		if (!infile) {
@@ -71,8 +83,9 @@ int main(int argc, char* argv[]) {
 				// tecmp packet
 				while (res == 0) {
 					// append packet_interface info
-					packet_interface.name = (char*)std::to_string(header.channel_id).c_str();
-					packet_interface.description = (char*)std::to_string(header.channel_id).c_str();
+					char* interface_name = get_interface_name(header.channel_id);
+					packet_interface.name = interface_name;
+					packet_interface.description = interface_name;
 					packet_interface.timestamp_resolution = NANOS_PER_SEC;
 					packet_header.timestamp = tecmp_get_timespec(header);
 
@@ -101,6 +114,7 @@ int main(int argc, char* argv[]) {
 						light_write_packet(outfile, &packet_interface, &packet_header, packet_data);
 					}
 					res = tecmp_next(packet_data, packet_header.captured_length, &iterator, &header, &data);
+					free(interface_name);
 				}
 			}
 		}
@@ -150,8 +164,9 @@ int main(int argc, char* argv[]) {
 				// tecmp packet
 				while (res == 0) {
 					// append packet_interface info
-					packet_interface.name = (char*)std::to_string(header.channel_id).c_str();
-					packet_interface.description = (char*)std::to_string(header.channel_id).c_str();
+					char* interface_name = get_interface_name(header.channel_id);
+					packet_interface.name = interface_name;
+					packet_interface.description = interface_name;
 					packet_interface.timestamp_resolution = NANOS_PER_SEC;
 					packet_header.timestamp = tecmp_get_timespec(header);
 
@@ -180,6 +195,7 @@ int main(int argc, char* argv[]) {
 						light_write_packet(outfile, &packet_interface, &packet_header, pMyPacketData);
 					}
 					res = tecmp_next(pMyPacketData, packet_header.captured_length, &iterator, &header, &data);
+					free(interface_name);
 				}
 			}
 			pPacketData = pcap_next(infile, &pkthdr);
