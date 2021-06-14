@@ -21,6 +21,7 @@ include(cmake/libpcap.cmake)
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
 add_executable(tecmp_converter "src/app.cpp" "src/endianness.h")
+set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT tecmp_converter)
 target_link_libraries(tecmp_converter tecmp_library light_pcapng_static libpcap)
 
 if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
