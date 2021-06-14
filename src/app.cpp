@@ -10,7 +10,6 @@
 #include <fstream>
 #include <iomanip>
 #include <iostream>
-#include <iostream>
 #include <locale>
 #include <map>
 #include <sstream>
@@ -33,6 +32,14 @@
 #if _WIN32
 #define strdup _strdup
 #endif
+
+char* get_interface_name(uint32_t channel_id) {
+	std::stringstream sstream;
+	sstream << std::hex << channel_id;
+	std::string hex_channel = sstream.str();
+	char* tmp = strdup(hex_channel.c_str());
+	return tmp;
+}
 
 int main(int argc, char* argv[]) {
 	if (argc != 3) {
@@ -76,12 +83,9 @@ int main(int argc, char* argv[]) {
 				// tecmp packet
 				while (res == 0) {
 					// append packet_interface info
-					std::stringstream sstream;
-					sstream << std::hex << header.channel_id;
-					std::string hex_channel = sstream.str();
-					char* tmp = strdup(hex_channel.c_str());
-					packet_interface.name = tmp;
-					packet_interface.description = tmp;
+					char* interface_name = get_interface_name(header.channel_id);
+					packet_interface.name = interface_name;
+					packet_interface.description = interface_name;
 					packet_interface.timestamp_resolution = NANOS_PER_SEC;
 					packet_header.timestamp = tecmp_get_timespec(header);
 
@@ -110,7 +114,7 @@ int main(int argc, char* argv[]) {
 						light_write_packet(outfile, &packet_interface, &packet_header, packet_data);
 					}
 					res = tecmp_next(packet_data, packet_header.captured_length, &iterator, &header, &data);
-					free(tmp);
+					free(interface_name);
 				}
 			}
 		}
@@ -160,12 +164,9 @@ int main(int argc, char* argv[]) {
 				// tecmp packet
 				while (res == 0) {
 					// append packet_interface info
-					std::stringstream sstream;
-					sstream << std::hex << header.channel_id;
-					std::string hex_channel = sstream.str();
-					char* tmp = strdup(hex_channel.c_str());
-					packet_interface.name = tmp;
-					packet_interface.description = tmp;
+					char* interface_name = get_interface_name(header.channel_id);
+					packet_interface.name = interface_name;
+					packet_interface.description = interface_name;
 					packet_interface.timestamp_resolution = NANOS_PER_SEC;
 					packet_header.timestamp = tecmp_get_timespec(header);
 
@@ -194,7 +195,7 @@ int main(int argc, char* argv[]) {
 						light_write_packet(outfile, &packet_interface, &packet_header, pMyPacketData);
 					}
 					res = tecmp_next(pMyPacketData, packet_header.captured_length, &iterator, &header, &data);
-					free(tmp);
+					free(interface_name);
 				}
 			}
 			pPacketData = pcap_next(infile, &pkthdr);
