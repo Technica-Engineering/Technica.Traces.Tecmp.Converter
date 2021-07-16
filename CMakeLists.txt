@@ -20,7 +20,7 @@ include(cmake/libpcap.cmake)
 # Let's nicely support folders in IDEs
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
-add_executable(tecmp_converter "src/app.cpp" "src/endianness.h")
+add_executable(tecmp_converter "src/app.cpp" "src/endianness.h" "src/lin.h")
 set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT tecmp_converter)
 target_link_libraries(tecmp_converter tecmp_library light_pcapng_static libpcap)
 
@@ -51,6 +51,7 @@ if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME AND BUILD_TESTING)
     # pcap files tests
     list(APPEND pcap_tests "tecmp_eth_message_pcap")
     list(APPEND pcap_tests "tecmp_can_messages_pcap")
+    list(APPEND pcap_tests "tecmp_lin_messages_pcap")
 
     foreach(pcap_test ${pcap_tests})
         get_filename_component(param ${pcap_test} NAME)
