@@ -17,11 +17,13 @@
 #include <tecmp/tecmp.h>
 #include <light_pcapng_ext.h>
 #include "endianness.h"
+#include "lin.h"
 #include "pcap.h"
 
 #define NANOS_PER_SEC 1000000000
 #define LINKTYPE_ETHERNET 1 
 #define LINKTYPE_CAN_SOCKETCAN 227 
+#define LINKTYPE_LIN 212 
 
 #define DIR_IN    1
 #define DIR_OUT   2
@@ -39,6 +41,80 @@ char* get_interface_name(uint32_t channel_id) {
 	std::string hex_channel = sstream.str();
 	char* tmp = strdup(hex_channel.c_str());
 	return tmp;
+}
+
+void transform(
+	const light_pcapng outfile,
+	light_packet_interface packet_interface,
+	light_packet_header packet_header,
+	const uint8_t* packet_data
+) {
+	int32_t iterator = 0;
+	tecmp_header header;
+	uint8_t* data;
+	int res = tecmp_next(packet_data, packet_header.captured_length, &iterator, &header, &data);
+	if (res == EINVAL) {
+		// not a tecmp packet, copy it as it is
+		light_write_packet(outfile, &packet_interface, &packet_header, packet_data);
+	}
+	else {
+		// tecmp packet
+		while (res == 0) {
+			// append packet_interface info
+			char* interface_name = get_interface_name(header.channel_id);
+			packet_interface.name = interface_name;
+			packet_interface.description = interface_name;
+			packet_interface.timestamp_resolution = NANOS_PER_SEC;
+			packet_header.timestamp = tecmp_get_timespec(header);
+
+			// append packet_header info
+			// in case of can, lin or ethernet packets, drop tecmp header
+			if (header.data_type == TECMP_DATA_CAN || header.data_type == TECMP_DATA_CANFD) {
+				packet_interface.link_type = LINKTYPE_CAN_SOCKETCAN;
+				const uint8_t can_length = data[4];
+				packet_header.captured_length = can_length + 8;
+				packet_header.original_length = can_length + 8;
+				uint8_t can_data[72] = { 0 };
+				memcpy(can_data, data, 5);
+				uint8_t reserved[3] = { 0,0,0 };
+				memcpy(can_data + 5, reserved, 3);
+				memcpy(can_data + 8, data + 5, can_length);
+				light_write_packet(outfile, &packet_interface, &packet_header, can_data);
+			}
+			else if (header.data_type == TECMP_DATA_LIN)
+			{
+				uint8_t len = data[1];
+				lin_frame lin;
+				lin.pid = data[0];
+				lin.payload_length = len;
+				if (len) {
+					memcpy(lin.data, data + 2, len);
+					lin.checksum = data[len + 2];
+				}
+				else
+				{
+					lin.errors |= LIN_ERROR_NOSLAVE;
+				}
+				packet_interface.link_type = LINKTYPE_LIN;
+				uint8_t lin_length = sizeof(lin_frame) + len - 8;
+				packet_header.captured_length = lin_length;
+				packet_header.original_length = lin_length;
+				light_write_packet(outfile, &packet_interface, &packet_header, (uint8_t*)&lin);
+			}
+			else if (header.data_type == TECMP_DATA_ETHERNET)
+			{
+				packet_interface.link_type = LINKTYPE_ETHERNET;
+				packet_header.captured_length = header.length;
+				packet_header.original_length = header.length;
+				light_write_packet(outfile, &packet_interface, &packet_header, data);
+			}
+			else {
+				light_write_packet(outfile, &packet_interface, &packet_header, packet_data);
+			}
+			res = tecmp_next(packet_data, packet_header.captured_length, &iterator, &header, &data);
+			free(interface_name);
+		}
+	}
 }
 
 int main(int argc, char* argv[]) {
@@ -71,52 +147,7 @@ int main(int argc, char* argv[]) {
 		const uint8_t* packet_data = nullptr;
 
 		while (light_read_packet(infile, &packet_interface, &packet_header, &packet_data)) {
-			int32_t iterator = 0;
-			tecmp_header header;
-			uint8_t* data;
-			int res = tecmp_next(packet_data, packet_header.captured_length, &iterator, &header, &data);
-			if (res == EINVAL) {
-				// not a tecmp packet, copy it as it is
-				light_write_packet(outfile, &packet_interface, &packet_header, packet_data);
-			}
-			else {
-				// tecmp packet
-				while (res == 0) {
-					// append packet_interface info
-					char* interface_name = get_interface_name(header.channel_id);
-					packet_interface.name = interface_name;
-					packet_interface.description = interface_name;
-					packet_interface.timestamp_resolution = NANOS_PER_SEC;
-					packet_header.timestamp = tecmp_get_timespec(header);
-
-					// append packet_header info
-					// in case of can or ethernet packets, drop tecmp header
-					if (header.data_type == TECMP_DATA_CAN || header.data_type == TECMP_DATA_CANFD) {
-						packet_interface.link_type = LINKTYPE_CAN_SOCKETCAN;
-						const uint8_t can_length = data[4];
-						packet_header.captured_length = can_length + 8;
-						packet_header.original_length = can_length + 8;
-						uint8_t can_data[72] = { 0 };
-						memcpy(can_data, data, 5);
-						uint8_t reserved[3] = { 0,0,0 };
-						memcpy(can_data + 5, reserved, 3);
-						memcpy(can_data + 8, data + 5, can_length);
-						light_write_packet(outfile, &packet_interface, &packet_header, can_data);
-					}
-					else if (header.data_type == TECMP_DATA_ETHERNET)
-					{
-						packet_interface.link_type = LINKTYPE_ETHERNET;
-						packet_header.captured_length = header.length;
-						packet_header.original_length = header.length;
-						light_write_packet(outfile, &packet_interface, &packet_header, data);
-					}
-					else {
-						light_write_packet(outfile, &packet_interface, &packet_header, packet_data);
-					}
-					res = tecmp_next(packet_data, packet_header.captured_length, &iterator, &header, &data);
-					free(interface_name);
-				}
-			}
+			transform(outfile, packet_interface, packet_header, packet_data);
 		}
 
 		light_pcapng_close(infile);
@@ -138,11 +169,8 @@ int main(int argc, char* argv[]) {
 		}
 		// the packet
 		pcap_pkthdr pkthdr;
-		const uint8_t* pPacketData = pcap_next(infile, &pkthdr);
-		while (pPacketData) {
-			// data
-			uint8_t* pMyPacketData = new uint8_t[pkthdr.caplen];
-			memcpy(pMyPacketData, pPacketData, pkthdr.caplen);
+		const uint8_t* packet_data = pcap_next(infile, &pkthdr);
+		while (packet_data) {
 			// light pcapng packet
 			light_packet_interface packet_interface = { 0 };
 			light_packet_header packet_header = { 0 };
@@ -151,54 +179,10 @@ int main(int argc, char* argv[]) {
 			packet_header.original_length = pkthdr.len;
 			packet_header.timestamp.tv_sec = pkthdr.ts.tv_sec;
 			packet_header.timestamp.tv_nsec = pkthdr.ts.tv_usec * 1000;
-			// tecmp packet
-			int32_t iterator = 0;
-			tecmp_header header;
-			uint8_t* data;
-			int res = tecmp_next(pMyPacketData, pkthdr.caplen, &iterator, &header, &data);
-			if (res == EINVAL) {
-				// not a tecmp packet, copy it as it is
-				light_write_packet(outfile, &packet_interface, &packet_header, pMyPacketData);
-			}
-			else {
-				// tecmp packet
-				while (res == 0) {
-					// append packet_interface info
-					char* interface_name = get_interface_name(header.channel_id);
-					packet_interface.name = interface_name;
-					packet_interface.description = interface_name;
-					packet_interface.timestamp_resolution = NANOS_PER_SEC;
-					packet_header.timestamp = tecmp_get_timespec(header);
 
-					// append packet_header info
-					// in case of can or ethernet packets, drop tecmp header
-					if (header.data_type == TECMP_DATA_CAN || header.data_type == TECMP_DATA_CANFD) {
-						packet_interface.link_type = LINKTYPE_CAN_SOCKETCAN;
-						const uint8_t can_length = data[4];
-						packet_header.captured_length = can_length + 8;
-						packet_header.original_length = can_length + 8;
-						uint8_t can_data[72] = { 0 };
-						memcpy(can_data, data, 5);
-						uint8_t reserved[3] = { 0,0,0 };
-						memcpy(can_data + 5, reserved, 3);
-						memcpy(can_data + 8, data + 5, can_length);
-						light_write_packet(outfile, &packet_interface, &packet_header, can_data);
-					}
-					else if (header.data_type == TECMP_DATA_ETHERNET)
-					{
-						packet_interface.link_type = LINKTYPE_ETHERNET;
-						packet_header.captured_length = header.length;
-						packet_header.original_length = header.length;
-						light_write_packet(outfile, &packet_interface, &packet_header, data);
-					}
-					else {
-						light_write_packet(outfile, &packet_interface, &packet_header, pMyPacketData);
-					}
-					res = tecmp_next(pMyPacketData, packet_header.captured_length, &iterator, &header, &data);
-					free(interface_name);
-				}
-			}
-			pPacketData = pcap_next(infile, &pkthdr);
+			transform(outfile, packet_interface, packet_header, packet_data);
+
+			packet_data = pcap_next(infile, &pkthdr);
 		}
 	}
 	else {
