@@ -16,13 +16,23 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
 include(cmake/libtecmp.cmake)
 include(cmake/pcapng.cmake)
 include(cmake/libpcap.cmake)
+include(cmake/args.cmake)
+include(cmake/json.cmake)
 
 # Let's nicely support folders in IDEs
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
-add_executable(tecmp_converter "src/app.cpp" "src/endianness.h" "src/lin.h")
+add_executable(tecmp_converter 
+    "src/app.cpp"
+    "src/endianness.h"
+    "src/lin.h"
+    "src/mapping.hpp"
+    "src/mapping.cpp"
+)
 set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT tecmp_converter)
-target_link_libraries(tecmp_converter tecmp_library light_pcapng_static libpcap)
+target_link_libraries(tecmp_converter 
+    tecmp_library light_pcapng_static libpcap args nlohmann_json)
+target_compile_features(tecmp_converter PRIVATE cxx_std_17)
 
 if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
     # Testing
@@ -61,6 +71,20 @@ if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME AND BUILD_TESTING)
             COMMAND tecmp_converter 
                 "${CMAKE_CURRENT_LIST_DIR}/tests/input/${pcap_test}.pcap"
                 "${CMAKE_CURRENT_LIST_DIR}/tests/results/${pcap_test}.pcapng"
+        )
+    endforeach()
+
+    # mapping files tests
+
+    foreach(pcapng_test ${pcapng_tests})
+        get_filename_component(param ${pcapng_test} NAME)
+        string(REPLACE "/" "." param ${pcapng_test})
+        add_test(
+            NAME "mapping.${param}"
+            COMMAND tecmp_converter
+                "--channel-map" "${CMAKE_CURRENT_LIST_DIR}/tests/mapping.json"
+                "${CMAKE_CURRENT_LIST_DIR}/tests/input/${pcapng_test}.pcapng"
+                "${CMAKE_CURRENT_LIST_DIR}/tests/results/mapped/${pcapng_test}.pcapng"
         )
     endforeach()
 endif()
