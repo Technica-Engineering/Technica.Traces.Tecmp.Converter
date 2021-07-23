@@ -4,21 +4,19 @@
 */
 
 #include <array>
-#include <codecvt>
 #include <cstring>
-#include <ctime>
 #include <fstream>
-#include <iomanip>
 #include <iostream>
-#include <locale>
 #include <map>
-#include <sstream>
 
 #include <tecmp/tecmp.h>
 #include <light_pcapng_ext.h>
 #include "endianness.h"
 #include "lin.h"
 #include "pcap.h"
+#include "mapping.hpp"
+#include <args.hxx>
+#include <nlohmann/json.hpp>
 
 #define NANOS_PER_SEC 1000000000
 #define LINKTYPE_ETHERNET 1 
@@ -35,19 +33,19 @@
 #define strdup _strdup
 #endif
 
-char* get_interface_name(uint32_t channel_id) {
-	std::stringstream sstream;
-	sstream << std::hex << channel_id;
-	std::string hex_channel = sstream.str();
-	char* tmp = strdup(hex_channel.c_str());
-	return tmp;
+char* new_str(const std::string str) {
+	char* writable = new char[str.size() + 1];
+	std::copy(str.begin(), str.end(), writable);
+	writable[str.size()] = '\0';
+	return writable;
 }
 
 void transform(
 	const light_pcapng outfile,
 	light_packet_interface packet_interface,
 	light_packet_header packet_header,
-	const uint8_t* packet_data
+	const uint8_t* packet_data,
+	std::vector<channel_mapping> mappings
 ) {
 	int32_t iterator = 0;
 	tecmp_header header;
@@ -60,10 +58,11 @@ void transform(
 	else {
 		// tecmp packet
 		while (res == 0) {
+			channel_info info = mapping_resolve(mappings, packet_interface, header);
+			char* inf_name = new_str(info.inf_name.value());
 			// append packet_interface info
-			char* interface_name = get_interface_name(header.channel_id);
-			packet_interface.name = interface_name;
-			packet_interface.description = interface_name;
+			packet_interface.name = inf_name;
+			packet_interface.description = inf_name;
 			packet_interface.timestamp_resolution = NANOS_PER_SEC;
 			packet_header.timestamp = tecmp_get_timespec(header);
 
@@ -112,33 +111,66 @@ void transform(
 				light_write_packet(outfile, &packet_interface, &packet_header, packet_data);
 			}
 			res = tecmp_next(packet_data, packet_header.captured_length, &iterator, &header, &data);
-			free(interface_name);
+			delete[] inf_name;
 		}
 	}
 }
 
 int main(int argc, char* argv[]) {
-	if (argc != 3) {
-		fprintf(stderr, "Usage %s [infile] [outfile]\n", argv[0]);
+
+	args::ArgumentParser parser("This tool is intended for converting TECMP packets to plain PCAPNG packets.");
+	parser.helpParams.showTerminator = false;
+	parser.helpParams.proglineShowFlags = true;
+
+	args::HelpFlag help(parser, "help", "", { 'h', "help" }, args::Options::HiddenFromUsage);
+	args::ValueFlag<std::string> maparg(parser, "map-file", "Configuration file for channel mapping", { "channel-map" });
+
+	args::Positional<std::string> inarg(parser, "infile", "Input File", args::Options::Required);
+	args::Positional<std::string> outarg(parser, "outfile", "Output File", args::Options::Required);
+
+	try
+	{
+		parser.ParseCLI(argc, argv);
+	}
+	catch (args::Help)
+	{
+		std::cout << parser;
+		return 0;
+	}
+	catch (args::Error e)
+	{
+		std::cerr << e.what() << std::endl;
+		std::cerr << parser;
 		return 1;
+	}
+	std::vector<channel_mapping> mappings;
+	if (maparg) {
+		std::ifstream ifs(maparg.Get());
+		nlohmann::json jm = nlohmann::json::parse(ifs);
+		auto version = jm.at("version").get<uint16_t>();
+		if (version != 1) {
+			std::cerr << "Invalid mapping version" << std::endl;
+			return 1;
+		}
+		mappings = jm.at("mappings").get<std::vector<channel_mapping>>();
 	}
 	// determine file type
 	int x;
 	std::ifstream file_check;
-	file_check.open(argv[1], std::ios::binary | std::ios::in);
+	file_check.open(args::get(inarg), std::ios::binary | std::ios::in);
 	file_check.read((char*)&x, 4);
 	file_check.close();
 
 	if (x == PCAP_NG_MAGIC_NUMBER) {
-		light_pcapng infile = light_pcapng_open(argv[1], "rb");
+		light_pcapng infile = light_pcapng_open(args::get(inarg).c_str(), "rb");
 		if (!infile) {
-			fprintf(stderr, "Unable to open: %s\n", argv[1]);
+			std::cerr << "Unable to open: " << args::get(inarg) << std::endl;
 			return 1;
 		}
 
-		light_pcapng outfile = light_pcapng_open(argv[2], "wb");
+		light_pcapng outfile = light_pcapng_open(args::get(outarg).c_str(), "wb");
 		if (!outfile) {
-			fprintf(stderr, "Unable to open: %s\n", argv[2]);
+			std::cerr << "Unable to open: " << args::get(outarg) << std::endl;
 			return 1;
 		}
 		// the packet 
@@ -147,7 +179,7 @@ int main(int argc, char* argv[]) {
 		const uint8_t* packet_data = nullptr;
 
 		while (light_read_packet(infile, &packet_interface, &packet_header, &packet_data)) {
-			transform(outfile, packet_interface, packet_header, packet_data);
+			transform(outfile, packet_interface, packet_header, packet_data, mappings);
 		}
 
 		light_pcapng_close(infile);
@@ -155,16 +187,16 @@ int main(int argc, char* argv[]) {
 	}
 	else if (x == PCAP_MAGIC_NUMBER || x == PCAP_MAGIC_NUMBER_LITTLE_ENDIAN) {
 		char errbuf[PCAP_ERRBUF_SIZE];
-		pcap_t* infile = pcap_open_offline(argv[1], errbuf);
+		pcap_t* infile = pcap_open_offline(args::get(inarg).c_str(), errbuf);
 		int link_layer = pcap_datalink(infile);
 		if (!infile) {
-			fprintf(stderr, "Unable to open: %s\n", argv[1]);
+			std::cerr << "Unable to open: " << args::get(inarg) << std::endl;
 			return 1;
 		}
 
-		light_pcapng outfile = light_pcapng_open(argv[2], "wb");
+		light_pcapng outfile = light_pcapng_open(args::get(outarg).c_str(), "wb");
 		if (!outfile) {
-			fprintf(stderr, "Unable to open: %s\n", argv[2]);
+			std::cerr << "Unable to open: " << args::get(outarg) << std::endl;
 			return 1;
 		}
 		// the packet
@@ -180,13 +212,13 @@ int main(int argc, char* argv[]) {
 			packet_header.timestamp.tv_sec = pkthdr.ts.tv_sec;
 			packet_header.timestamp.tv_nsec = pkthdr.ts.tv_usec * 1000;
 
-			transform(outfile, packet_interface, packet_header, packet_data);
+			transform(outfile, packet_interface, packet_header, packet_data, mappings);
 
 			packet_data = pcap_next(infile, &pkthdr);
 		}
 	}
 	else {
-		fprintf(stderr, "Not valid input file: %s\n", argv[1]);
+		std::cerr << "Not valid input file: " << args::get(inarg) << std::endl;
 		return 1;
 	}
 	return 0;
