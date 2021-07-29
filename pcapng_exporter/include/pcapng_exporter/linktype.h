@@ -1,0 +1,9 @@
+#ifndef _LINKTYPE_H
+#define _LINKTYPE_H
+
+#define LINKTYPE_ETHERNET 1
+#define LINKTYPE_CAN 227
+#define LINKTYPE_LIN 212
+#define LINKTYPE_FLEXRAY 210
+
+#endif
