@@ -53,13 +53,13 @@ namespace pcapng_exporter {
 			nlohmann::json jm = nlohmann::json::parse(ifs);
 			auto version = jm.at("version").get<uint16_t>();
 			if (version != 1) {
-				throw std::exception("Invalid mapping version");
+				throw std::invalid_argument("Invalid mapping version");
 			}
 			mappings = jm.at("mappings").get<std::vector<channel_mapping>>();
 		}
 		file = light_pcapng_open(pcapng_file.c_str(), "wb");
 		if (!file) {
-			throw std::exception((std::string("Unable to open: ") + pcapng_file).c_str());
+			throw std::invalid_argument((std::string("Unable to open: ") + pcapng_file).c_str());
 		}
 	}
 
