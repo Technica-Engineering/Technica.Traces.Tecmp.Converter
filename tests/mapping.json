@@ -7,7 +7,7 @@
         },
         "change": {
           "inf_name": "can0",
-          "direction": "Tx"
+          "pkt_dir": "Tx"
         }
       },
       {
@@ -16,7 +16,7 @@
         },
         "change": {
           "inf_name": "can_three",
-          "direction": "Rx"
+          "pkt_dir": "Rx"
         }
       }
     ]

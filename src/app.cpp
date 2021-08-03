@@ -50,6 +50,7 @@ void transform(
 			hdr.channel_id = header.channel_id;
 			hdr.timestamp_resolution = packet_interface.timestamp_resolution;
 			hdr.timestamp = packet_header.timestamp;
+			hdr.flags = (header.data_flags & 0x4000 != 0) ? 2 : 1;
 
 			// append packet_header info
 			// in case of can, lin or ethernet packets, drop tecmp header
