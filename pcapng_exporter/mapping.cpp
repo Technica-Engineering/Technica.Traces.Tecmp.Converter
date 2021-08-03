@@ -37,6 +37,9 @@ namespace pcapng_exporter {
 		if (when.inf_name.has_value() && when.inf_name != target.inf_name) {
 			return false;
 		}
+		if (when.direction.has_value() && when.direction!= target.direction){
+			return false;
+		}
 		return true;
 	}
 
@@ -47,6 +50,7 @@ namespace pcapng_exporter {
 		target.inf_name = packet_interface.name
 			? std::optional(std::string(packet_interface.name))
 			: std::nullopt;
+		target.direction = std::nullopt;
 		// Result
 		channel_info result;
 		result.chl_id = channel_id;
@@ -54,6 +58,7 @@ namespace pcapng_exporter {
 			if (mapping_match(target, mapping.when)) {
 				merge_value(&result.chl_id, mapping.change.chl_id);
 				merge_value(&result.inf_name, mapping.change.inf_name);
+				merge_value(&result.direction, mapping.change.direction);
 				break;
 			}
 		}

@@ -27,6 +27,9 @@ namespace pcapng_exporter {
 		if (j.contains("inf_name")) {
 			i.inf_name = j.at("inf_name").get<std::string>();
 		}
+		if (j.contains("direction")) {
+			i.direction = j.at("direction").get<std::string>();
+		}
 	}
 
 	void to_json(nlohmann::json& j, const channel_info& i)
@@ -66,7 +69,7 @@ namespace pcapng_exporter {
 	void PcapngExporter::write_packet(
 		uint32_t channel_id,
 		const light_packet_interface packet_interface,
-		const light_packet_header packet_header,
+		light_packet_header packet_header,
 		const uint8_t* packet_data
 	)
 	{
@@ -76,6 +79,14 @@ namespace pcapng_exporter {
 		// append packet_interface info
 		inf.name = inf_name;
 		inf.description = inf_name;
+		int dir = 0;
+		if (info.direction == "Tx") {
+			dir = 2;
+		}
+		else if (info.direction == "Rx") {
+			dir = 1;
+		}
+		packet_header.flags = (packet_header.flags & 0xfffffffc) + dir;
 		this->write_packet(inf, packet_header, packet_data);
 		delete[] inf_name;
 	}
