@@ -22,21 +22,21 @@ include(cmake/json.cmake)
 # Let's nicely support folders in IDEs
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
+
+add_subdirectory("pcapng_exporter")
+
 add_executable(tecmp_converter 
     "src/app.cpp"
-    "src/endianness.h"
-    "src/lin.h"
-    "src/mapping.hpp"
-    "src/mapping.cpp"
 )
-set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT tecmp_converter)
-target_link_libraries(tecmp_converter 
-    tecmp_library light_pcapng_static libpcap args nlohmann_json)
+
+target_link_libraries(tecmp_converter
+    pcapng_exporter tecmp_library light_pcapng_static libpcap args)
 target_compile_features(tecmp_converter PRIVATE cxx_std_17)
 
 if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
     # Testing
     include(CTest)
+    set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT tecmp_converter)
 endif()
 
 if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME AND BUILD_TESTING)
