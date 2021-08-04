@@ -13,9 +13,19 @@
 
 namespace pcapng_exporter {
 
+	enum class pkt_dir_enum{
+		TS_UNDEFINED = 0,
+		TS_INBOUND = 1,
+		TS_OUTBOUND = 2,
+	};
+
 	struct channel_info {
 		std::optional<std::uint32_t> chl_id = std::nullopt;
 		std::optional<std::string> inf_name = std::nullopt;
+		/// <summary>
+		/// possible values : undefined:: TS_UNDEFINED, Tx:: TS_OUTBOUND, Rx::TS_INBOUND
+		/// </summary>
+		std::optional<pkt_dir_enum> pkt_dir = std::nullopt;
 	};
 
 	struct channel_mapping {
@@ -23,7 +33,7 @@ namespace pcapng_exporter {
 		channel_info change;
 	};
 
-	channel_info mapping_resolve(std::vector<channel_mapping> mappings, light_packet_interface packet_interface, uint32_t channel_id);
+	channel_info mapping_resolve(std::vector<channel_mapping> mappings, light_packet_interface packet_interface, light_packet_header packet_header, uint32_t channel_id);
 }
 
 #endif

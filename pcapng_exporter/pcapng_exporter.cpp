@@ -9,6 +9,7 @@
 #include "pcapng_exporter/linktype.h"
 #include "pcapng_exporter/lin.h"
 #include "pcapng_exporter/pcapng_exporter.hpp"
+#include "pcapng_exporter/mapping.hpp"
 
 namespace pcapng_exporter {
 
@@ -26,6 +27,18 @@ namespace pcapng_exporter {
 		}
 		if (j.contains("inf_name")) {
 			i.inf_name = j.at("inf_name").get<std::string>();
+		}
+		if (j.contains("pkt_dir")) {
+			auto dir = j.at("pkt_dir").get<std::string>();
+			if (dir == "Tx") {
+				i.pkt_dir = pkt_dir_enum::TS_OUTBOUND;
+			}
+			else if (dir == "Rx") {
+				i.pkt_dir = pkt_dir_enum::TS_INBOUND;
+			}
+			else if (dir == "undefined") {
+				i.pkt_dir = pkt_dir_enum::TS_UNDEFINED;
+			}
 		}
 	}
 
@@ -70,13 +83,16 @@ namespace pcapng_exporter {
 		const uint8_t* packet_data
 	)
 	{
-		light_packet_interface inf = packet_interface;
-		channel_info info = mapping_resolve(this->mappings, inf, channel_id);
+		auto inf = packet_interface;
+		auto hdr = packet_header;
+		channel_info info = mapping_resolve(this->mappings, inf, hdr, channel_id);
 		char* inf_name = new_str(info.inf_name.value());
 		// append packet_interface info
 		inf.name = inf_name;
 		inf.description = inf_name;
-		this->write_packet(inf, packet_header, packet_data);
+		int dir = info.pkt_dir.has_value() ? (int)info.pkt_dir.value() : 0;
+		hdr.flags = (packet_header.flags & 0xfffffffc) + dir;
+		this->write_packet(inf, hdr, packet_data);
 		delete[] inf_name;
 	}
 
