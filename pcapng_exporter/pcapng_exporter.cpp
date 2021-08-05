@@ -113,6 +113,7 @@ namespace pcapng_exporter {
 		pkt_header.original_length = cap_len;
 		pkt_header.timestamp = header.timestamp;
 		pkt_header.flags = header.flags;
+		pkt_header.queue = header.queue;
 		pkt_header.comment = header.comment;
 
 		this->write_packet(header.channel_id, inf_header, pkt_header, frame.data());

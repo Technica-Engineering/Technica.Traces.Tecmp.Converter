@@ -22,6 +22,7 @@ namespace pcapng_exporter {
 
 		char* comment;
 		uint32_t flags;
+		uint32_t queue;
 	} packet_header;
 
 	class PcapngExporter {
