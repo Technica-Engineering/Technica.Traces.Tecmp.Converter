@@ -46,6 +46,7 @@ if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME AND BUILD_TESTING)
     list(APPEND pcapng_tests "tecmp_can_message")
     list(APPEND pcapng_tests "tecmp_eth_message")
     list(APPEND pcapng_tests "tecmp_can_pcapng")
+    list(APPEND pcapng_tests "tecmp_can_tx")
 
     foreach(pcapng_test ${pcapng_tests})
         get_filename_component(param ${pcapng_test} NAME)
