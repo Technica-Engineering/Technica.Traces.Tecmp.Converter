@@ -3,7 +3,7 @@
 
 # Technica.Traces.Pcap.Converter
 
-This tool is intended for converting TECMP packets to plain PCAPNG packets/.
+This tool is intended for converting TECMP packets to plain PCAPNG packets.
 
 ### Build
 
