@@ -17,13 +17,10 @@ include(cmake/libtecmp.cmake)
 include(cmake/pcapng.cmake)
 include(cmake/libpcap.cmake)
 include(cmake/args.cmake)
-include(cmake/json.cmake)
+include(cmake/pcapng_exporter.cmake)
 
 # Let's nicely support folders in IDEs
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
-
-
-add_subdirectory("pcapng_exporter")
 
 add_executable(tecmp_converter 
     "src/app.cpp"
