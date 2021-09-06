@@ -30,6 +30,11 @@ target_link_libraries(tecmp_converter
     pcapng_exporter tecmp_library light_pcapng_static libpcap args)
 target_compile_features(tecmp_converter PRIVATE cxx_std_17)
 
+if(WIN32)
+    set_target_properties(tecmp_converter PROPERTIES LINK_FLAGS "/DELAYLOAD:wpcap.dll")
+    target_link_libraries(tecmp_converter delayimp)
+endif()
+
 install(TARGETS tecmp_converter COMPONENT tecmp_converter)
 
 if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
