@@ -26,6 +26,28 @@
 
 using namespace pcapng_exporter;
 
+#if _WIN32
+// From https://nmap.org/npcap/guide/npcap-tutorial.html
+#include <Windows.h>
+#include <tchar.h>
+bool LoadNpcapDlls()
+{
+	TCHAR npcap_dir[512];
+	UINT len;
+	len = GetSystemDirectory(npcap_dir, 480);
+	if (!len) {
+		fprintf(stderr, "Error in GetSystemDirectory: %x", GetLastError());
+		return false;
+	}
+	_tcscat_s(npcap_dir, 512, TEXT("\\Npcap"));
+	if (SetDllDirectory(npcap_dir) == 0) {
+		fprintf(stderr, "Error in SetDllDirectory: %x", GetLastError());
+		return false;
+	}
+	return true;
+}
+#endif
+
 void transform(
 	PcapngExporter exporter,
 	light_packet_interface packet_interface,
@@ -95,6 +117,10 @@ void transform(
 }
 
 int main(int argc, char* argv[]) {
+
+#if _WIN32
+	LoadNpcapDlls();
+#endif
 
 	args::ArgumentParser parser("This tool is intended for converting TECMP packets to plain PCAPNG packets.");
 	parser.helpParams.showTerminator = false;
