@@ -30,6 +30,8 @@ target_link_libraries(tecmp_converter
     pcapng_exporter tecmp_library light_pcapng_static libpcap args)
 target_compile_features(tecmp_converter PRIVATE cxx_std_17)
 
+install(TARGETS tecmp_converter COMPONENT tecmp_converter)
+
 if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
     # Testing
     include(CTest)

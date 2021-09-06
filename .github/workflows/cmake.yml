@@ -44,7 +44,9 @@ jobs:
 
     - name: Build
       working-directory: build
-      run: cmake --build . --config ${{env.BUILD_TYPE}}
+      run: |
+        cmake --build . --config ${{env.BUILD_TYPE}}
+        cmake --install . --prefix ../dist --component tecmp_converter
 
     - name: Test
       working-directory: build
@@ -56,7 +58,5 @@ jobs:
       uses: actions/upload-artifact@v2
       with:
         name: ${{matrix.os}} artifacts
-        path: |
-          build/${{env.BUILD_TYPE}}
-          build/tecmp_converter
+        path: dist
         retention-days: 7
