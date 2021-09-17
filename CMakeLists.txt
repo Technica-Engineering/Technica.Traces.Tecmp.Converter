@@ -27,7 +27,7 @@ add_executable(tecmp_converter
 )
 
 target_link_libraries(tecmp_converter
-    pcapng_exporter tecmp_library light_pcapng_static libpcap args)
+    pcapng_exporter tecmp_library light_pcapng libpcap args)
 target_compile_features(tecmp_converter PRIVATE cxx_std_17)
 
 if(WIN32)
