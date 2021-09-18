@@ -17,6 +17,7 @@ include(cmake/libtecmp.cmake)
 include(cmake/pcapng.cmake)
 include(cmake/libpcap.cmake)
 include(cmake/args.cmake)
+add_library(light_pcapng_static ALIAS light_pcapng)
 include(cmake/pcapng_exporter.cmake)
 
 # Let's nicely support folders in IDEs
