@@ -9,3 +9,8 @@ FetchContent_Declare(
 )
 
 FetchContent_MakeAvailable(pcapng_exporter)
+
+target_link_libraries(pcapng_exporter
+    PUBLIC
+    light_pcapng
+)
