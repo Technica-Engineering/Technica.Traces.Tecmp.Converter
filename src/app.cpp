@@ -106,6 +106,26 @@ void transform(
 				std::vector<uint8_t>frame(data, data + header.length);
 				exporter.write_ethernet(hdr, frame);
 			}
+			else if (header.data_type == TECMP_DATA_FLEXRAY)
+			{
+				flexray_frame fr;
+				fr.channel = 0;
+				fr.err_flags = 0;
+				fr.fr_flags =
+					(header.data_flags & 1 ? 0 : FR_NFI) |
+					(header.data_flags & 2 ? FR_STFI : 0) |
+					(header.data_flags & 4 ? FR_SFI : 0) |
+					(header.data_flags & 16 ? FR_PPI : 0);
+
+				fr.cc = data[0];
+				fr.fid = ntoh16(*((uint16_t*)(data + 1)));
+				fr.hcrc = 0;
+				uint8_t len = data[3];
+				fr.len = len / 2;
+				memcpy(fr.data, data + 4, len);
+
+				exporter.write_flexray(hdr, fr);
+			}
 			else
 			{
 				exporter.write_packet(header.channel_id, packet_interface, packet_header, packet_data);

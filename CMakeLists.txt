@@ -17,7 +17,6 @@ include(cmake/libtecmp.cmake)
 include(cmake/pcapng.cmake)
 include(cmake/libpcap.cmake)
 include(cmake/args.cmake)
-add_library(light_pcapng_static ALIAS light_pcapng)
 include(cmake/pcapng_exporter.cmake)
 
 # Let's nicely support folders in IDEs
@@ -68,6 +67,8 @@ if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME AND BUILD_TESTING)
     list(APPEND pcap_tests "tecmp_eth_message_pcap")
     list(APPEND pcap_tests "tecmp_can_messages_pcap")
     list(APPEND pcap_tests "tecmp_lin_messages_pcap")
+    list(APPEND pcap_tests "tecmp_fr_null_frame_pcap")
+    list(APPEND pcap_tests "tecmp_fr_sync_frame_pcap")
 
     foreach(pcap_test ${pcap_tests})
         get_filename_component(param ${pcap_test} NAME)
