@@ -27,7 +27,7 @@ add_executable(tecmp_converter
 )
 
 target_link_libraries(tecmp_converter
-    pcapng_exporter tecmp_library light_pcapng_static libpcap args)
+    pcapng_exporter tecmp_library light_pcapng libpcap args)
 target_compile_features(tecmp_converter PRIVATE cxx_std_17)
 
 if(WIN32)
@@ -67,6 +67,8 @@ if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME AND BUILD_TESTING)
     list(APPEND pcap_tests "tecmp_eth_message_pcap")
     list(APPEND pcap_tests "tecmp_can_messages_pcap")
     list(APPEND pcap_tests "tecmp_lin_messages_pcap")
+    list(APPEND pcap_tests "tecmp_fr_null_frame_pcap")
+    list(APPEND pcap_tests "tecmp_fr_sync_frame_pcap")
 
     foreach(pcap_test ${pcap_tests})
         get_filename_component(param ${pcap_test} NAME)
