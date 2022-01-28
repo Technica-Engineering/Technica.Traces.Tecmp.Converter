@@ -154,7 +154,7 @@ int main(int argc, char* argv[]) {
 
 	args::Positional<std::string> inarg(parser, "infile", "Input File", args::Options::Required);
 	args::Positional<std::string> outarg(parser, "outfile", "Output File", args::Options::Required);
-	args::Flag drop(parser, "drop", "Drop unknown packets", {'d', "drop"}, args::Options::Optional);
+	args::Flag drop(parser, "drop", "Drop unknown packets", {'d', "drop"}, args::Options::Single);
 
 	try
 	{
@@ -193,7 +193,7 @@ int main(int argc, char* argv[]) {
 		const uint8_t* packet_data = nullptr;
 
 		while (light_read_packet(infile, &packet_interface, &packet_header, &packet_data)) {
-			transform(exporter, drop.get(), packet_interface, packet_header, packet_data);
+			transform(exporter, drop.Get(), packet_interface, packet_header, packet_data);
 		}
 
 		light_pcapng_close(infile);
@@ -219,7 +219,7 @@ int main(int argc, char* argv[]) {
 			packet_header.timestamp.tv_sec = pkthdr.ts.tv_sec;
 			packet_header.timestamp.tv_nsec = pkthdr.ts.tv_usec * 1000;
 
-			transform(exporter, drop.get(), packet_interface, packet_header, packet_data);
+			transform(exporter, drop.Get(), packet_interface, packet_header, packet_data);
 
 			packet_data = pcap_next(infile, &pkthdr);
 		}
