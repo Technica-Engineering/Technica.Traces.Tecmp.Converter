@@ -2,19 +2,20 @@
 if (WIN32)
     include(FetchContent)
     FetchContent_Declare(
-        winpcap
-        URL https://www.winpcap.org/install/bin/WpdPack_4_1_2.zip
+        npcap
+        URL https://npcap.com/dist/npcap-sdk-1.12.zip
     )
 
-    FetchContent_MakeAvailable(winpcap)
+    FetchContent_MakeAvailable(npcap)
 
     if (${CMAKE_SIZEOF_VOID_P} EQUAL 8)
-        # On x64 windows, we should look for the .lib at /lib/x64/
-        # as this is the default path for the WinPcap developer's pack
-        list(APPEND CMAKE_PREFIX_PATH "${winpcap_SOURCE_DIR}/lib/x64/")
+        # On x64 windows, we should look for the .lib at /Lib/x64
+        list(APPEND CMAKE_PREFIX_PATH "${npcap_SOURCE_DIR}/Lib/x64")
+    else()
+        list(APPEND CMAKE_PREFIX_PATH "${npcap_SOURCE_DIR}/Lib")
     endif()
     
-    list(APPEND CMAKE_PREFIX_PATH "${winpcap_SOURCE_DIR}")
+    list(APPEND CMAKE_PREFIX_PATH "${npcap_SOURCE_DIR}/Include")
 
 endif()
 
