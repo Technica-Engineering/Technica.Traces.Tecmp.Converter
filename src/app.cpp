@@ -50,7 +50,7 @@ bool LoadNpcapDlls()
 
 void transform(
 	PcapngExporter exporter,
-	bool drop_unknown,
+	bool tecmp_only,
 	light_packet_interface packet_interface,
 	light_packet_header packet_header,
 	const uint8_t* packet_data
@@ -61,7 +61,10 @@ void transform(
 	int res = tecmp_next(packet_data, packet_header.captured_length, &iterator, &header, &data);
 	if (res == EINVAL) {
 		// not a tecmp packet, copy it as it is
-		exporter.write_packet(packet_interface, packet_header, packet_data);
+		if (!tecmp_only)
+		{
+			exporter.write_packet(packet_interface, packet_header, packet_data);
+		}
 	}
 	else {
 		// tecmp packet
@@ -129,9 +132,7 @@ void transform(
 			}
 			else
 			{
-				if (!drop_unknown) {
-					exporter.write_packet(header.channel_id, packet_interface, packet_header, packet_data);
-				}
+				exporter.write_packet(header.channel_id, packet_interface, packet_header, packet_data);
 			}
 			res = tecmp_next(packet_data, packet_header.captured_length, &iterator, &header, &data);
 
