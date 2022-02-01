@@ -100,7 +100,7 @@ if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME AND BUILD_TESTING)
 
     foreach(tecmp_only_test "${tecmp_only_tests}")
         add_test(
-            NAME "mapping.${param}.tecmp_only"
+            NAME "${param}.tecmp_only"
             COMMAND tecmp_converter "--tecmp-only"
                 "${CMAKE_CURRENT_LIST_DIR}/tests/input/${tecmp_only_test}.pcapng"
                 "${CMAKE_CURRENT_LIST_DIR}/tests/results/mapped/${tecmp_only_test}.pcapng"
