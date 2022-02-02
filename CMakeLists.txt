@@ -94,4 +94,16 @@ if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME AND BUILD_TESTING)
                 "${CMAKE_CURRENT_LIST_DIR}/tests/results/mapped/${pcapng_test}.pcapng"
         )
     endforeach()
+
+    # TECMP-only tests
+    list(APPEND tecmp_only_tests "dirty_tecmp")
+
+    foreach(tecmp_only_test "${tecmp_only_tests}")
+        add_test(
+            NAME "${tecmp_only_test}.tecmp_only"
+            COMMAND tecmp_converter "--tecmp-only"
+                "${CMAKE_CURRENT_LIST_DIR}/tests/input/${tecmp_only_test}.pcapng"
+                "${CMAKE_CURRENT_LIST_DIR}/tests/results/mapped/${tecmp_only_test}.pcapng"
+        )
+    endforeach()
 endif()
