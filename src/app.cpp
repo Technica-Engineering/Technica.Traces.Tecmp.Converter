@@ -86,7 +86,7 @@ void transform(
 				struct canfd_frame can = { 0 };
 				can.can_id = ntoh32(*((uint32_t*)data));
 				can.len = data[4];
-				can.flags |= packet_header.flags & CANFD_ESI;
+				can.flags |= header.data_flags & 0x02 ? CANFD_ESI;
 				memcpy(can.data, data + 5, can.len);
 				exporter.write_can(hdr, can);
 			}
