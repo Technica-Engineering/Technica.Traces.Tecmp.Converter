@@ -18,6 +18,10 @@
 #include "pcap.h"
 #include <args.hxx>
 
+//AnAm: NOTE: Since the proper flag could not be found in the
+// TECMP documentation a temporary variable has been generated
+// to provide a temporary logic.
+#define TMP_ERROR_NODE_ACTIVE 0x0002
 #define NANOS_PER_SEC 1000000000
 
 #define PCAP_NG_MAGIC_NUMBER 0x0A0D0D0A
@@ -86,6 +90,11 @@ void transform(
 				struct canfd_frame can = { 0 };
 				can.can_id = ntoh32(*((uint32_t*)data));
 				can.len = data[4];
+				if ((header.data_type == TECMP_DATA_CANFD) &&
+					(header.data_flags & TMP_ERROR_NODE_ACTIVE))
+				{
+					can.flags |= CANFD_ESI;
+				}
 				memcpy(can.data, data + 5, can.len);
 				exporter.write_can(hdr, can);
 			}
