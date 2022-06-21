@@ -18,6 +18,10 @@
 #include "pcap.h"
 #include <args.hxx>
 
+//AnAm: NOTE: Since the proper flag could not be found in the
+// TECMP documentation a temporary variable has been generated
+// to provide a temporary logic.
+#define TMP_ERROR_NODE_ACTIVE 0x0002
 #define NANOS_PER_SEC 1000000000
 
 #define PCAP_NG_MAGIC_NUMBER 0x0A0D0D0A
@@ -50,6 +54,7 @@ bool LoadNpcapDlls()
 
 void transform(
 	PcapngExporter exporter,
+	bool tecmp_only,
 	light_packet_interface packet_interface,
 	light_packet_header packet_header,
 	const uint8_t* packet_data
@@ -60,7 +65,10 @@ void transform(
 	int res = tecmp_next(packet_data, packet_header.captured_length, &iterator, &header, &data);
 	if (res == EINVAL) {
 		// not a tecmp packet, copy it as it is
-		exporter.write_packet(packet_interface, packet_header, packet_data);
+		if (!tecmp_only)
+		{
+			exporter.write_packet(packet_interface, packet_header, packet_data);
+		}
 	}
 	else {
 		// tecmp packet
@@ -82,6 +90,11 @@ void transform(
 				struct canfd_frame can = { 0 };
 				can.can_id = ntoh32(*((uint32_t*)data));
 				can.len = data[4];
+				if ((header.data_type == TECMP_DATA_CANFD) &&
+					(header.data_flags & TMP_ERROR_NODE_ACTIVE))
+				{
+					can.flags |= CANFD_ESI;
+				}
 				memcpy(can.data, data + 5, can.len);
 				exporter.write_can(hdr, can);
 			}
@@ -151,6 +164,7 @@ int main(int argc, char* argv[]) {
 
 	args::Positional<std::string> inarg(parser, "infile", "Input File", args::Options::Required);
 	args::Positional<std::string> outarg(parser, "outfile", "Output File", args::Options::Required);
+	args::Flag tecmp_only(parser, "tecmp-only", "Only process TECMP packets, drop others", { "tecmp-only" }, args::Options::Single);
 
 	try
 	{
@@ -189,7 +203,7 @@ int main(int argc, char* argv[]) {
 		const uint8_t* packet_data = nullptr;
 
 		while (light_read_packet(infile, &packet_interface, &packet_header, &packet_data)) {
-			transform(exporter, packet_interface, packet_header, packet_data);
+			transform(exporter, tecmp_only.Get(), packet_interface, packet_header, packet_data);
 		}
 
 		light_pcapng_close(infile);
@@ -215,7 +229,7 @@ int main(int argc, char* argv[]) {
 			packet_header.timestamp.tv_sec = pkthdr.ts.tv_sec;
 			packet_header.timestamp.tv_nsec = pkthdr.ts.tv_usec * 1000;
 
-			transform(exporter, packet_interface, packet_header, packet_data);
+			transform(exporter, tecmp_only.Get(), packet_interface, packet_header, packet_data);
 
 			packet_data = pcap_next(infile, &pkthdr);
 		}
