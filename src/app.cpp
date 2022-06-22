@@ -227,7 +227,7 @@ int main(int argc, char* argv[]) {
 			packet_header.captured_length = pkthdr.caplen;
 			packet_header.original_length = pkthdr.len;
 			packet_header.timestamp.tv_sec = pkthdr.ts.tv_sec;
-			packet_header.timestamp.tv_nsec = pkthdr.ts.tv_usec;
+			packet_header.timestamp.tv_nsec = pkthdr.ts.tv_usec * 1000;
 
 			transform(exporter, tecmp_only.Get(), packet_interface, packet_header, packet_data);
 
