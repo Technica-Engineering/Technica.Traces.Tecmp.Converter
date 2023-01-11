@@ -1,6 +1,7 @@
 [![](https://img.shields.io/badge/download-nightly-green)](https://nightly.link/Technica-Engineering/Technica.Traces.Tecmp.Converter/workflows/cmake/master)
-![](https://img.shields.io/github/workflow/status/Technica-Engineering/Technica.Traces.Pcap.Converter/CMake)
+![](https://img.shields.io/github/actions/workflow/status/Technica-Engineering/Technica.Traces.Pcap.Converter/cmake.yml)
 ![](https://img.shields.io/github/license/Technica-Engineering/Technica.Traces.Pcap.Converter)
+
 
 # Technica.Traces.Pcap.Converter
 
