@@ -30,12 +30,22 @@ target_link_libraries(tecmp_converter
     pcapng_exporter tecmp_library light_pcapng libpcap args)
 target_compile_features(tecmp_converter PRIVATE cxx_std_17)
 
+add_executable(bmw_tecmp_converter 
+    "src/bmw_app.cpp"
+)
+
+target_link_libraries(bmw_tecmp_converter
+    pcapng_exporter bmw_tecmp_library light_pcapng libpcap args)
+target_compile_features(bmw_tecmp_converter PRIVATE cxx_std_17)
+
 if(WIN32)
     set_target_properties(tecmp_converter PROPERTIES LINK_FLAGS "/DELAYLOAD:wpcap.dll")
     target_link_libraries(tecmp_converter delayimp)
+    set_target_properties(bmw_tecmp_converter PROPERTIES LINK_FLAGS "/DELAYLOAD:wpcap.dll")
+    target_link_libraries(bmw_tecmp_converter delayimp)
 endif()
 
-install(TARGETS tecmp_converter COMPONENT tecmp_converter)
+install(TARGETS tecmp_converter bmw_tecmp_converter COMPONENT tecmp_converter)
 
 if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
     # Testing
