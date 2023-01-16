@@ -35,7 +35,7 @@ add_executable(bmw_tecmp_converter
 )
 
 target_link_libraries(bmw_tecmp_converter
-    pcapng_exporter bmw_tecmp_library light_pcapng libpcap args)
+    pcapng_exporter tecmp_library light_pcapng libpcap args)
 target_compile_features(bmw_tecmp_converter PRIVATE cxx_std_17)
 
 if(WIN32)
