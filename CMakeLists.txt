@@ -30,19 +30,19 @@ target_link_libraries(tecmp_converter
     pcapng_exporter tecmp_library light_pcapng libpcap args)
 target_compile_features(tecmp_converter PRIVATE cxx_std_17)
 
-add_executable(bmw_tecmp_converter 
-    "src/bmw_app.cpp"
+add_executable(tecmp2plp 
+    "src/tecmp2plp.cpp"
 )
 
-target_link_libraries(bmw_tecmp_converter
+target_link_libraries(tecmp2plp
     pcapng_exporter tecmp_library light_pcapng libpcap args)
-target_compile_features(bmw_tecmp_converter PRIVATE cxx_std_17)
+target_compile_features(tecmp2plp PRIVATE cxx_std_17)
 
 if(WIN32)
     set_target_properties(tecmp_converter PROPERTIES LINK_FLAGS "/DELAYLOAD:wpcap.dll")
     target_link_libraries(tecmp_converter delayimp)
-    set_target_properties(bmw_tecmp_converter PROPERTIES LINK_FLAGS "/DELAYLOAD:wpcap.dll")
-    target_link_libraries(bmw_tecmp_converter delayimp)
+    set_target_properties(tecmp2plp PROPERTIES LINK_FLAGS "/DELAYLOAD:wpcap.dll")
+    target_link_libraries(tecmp2plp delayimp)
 endif()
 
 install(TARGETS tecmp_converter bmw_tecmp_converter COMPONENT tecmp_converter)

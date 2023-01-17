@@ -168,7 +168,6 @@ int main(int argc, char* argv[]) {
 
 	args::Positional<std::string> inarg(parser, "infile", "Input File", args::Options::Required);
 	args::Positional<std::string> outarg(parser, "outfile", "Output File", args::Options::Required);
-	args::Flag tecmp_only(parser, "tecmp-only", "Only process TECMP packets, drop others", { "tecmp-only" }, args::Options::Single);
 
 	try
 	{
