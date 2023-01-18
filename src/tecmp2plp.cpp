@@ -77,10 +77,6 @@ void transform(
 			packet_header.timestamp = tecmp_get_timespec(header);
 
 			frame_header hdr = { 0 };
-			if (header.message_type == 0x99FE)
-			{
-				header.message_type = 0x2090;
-			}
 			hdr.channel_id = header.channel_id;
 			hdr.timestamp_resolution = packet_interface.timestamp_resolution;
 			hdr.timestamp = packet_header.timestamp;
@@ -121,6 +117,11 @@ void transform(
 			else if (header.data_type == TECMP_DATA_ETHERNET)
 			{
 				std::vector<uint8_t>frame(data, data + header.length);
+				if (frame.at(12) == 0y99 && frame.at(13) == 0xFE)
+				{
+					frame[12] == 0x20;
+					frame[13] = 0x90;
+				}
 				exporter.write_ethernet(hdr, frame);
 			}
 			else if (header.data_type == TECMP_DATA_FLEXRAY)
