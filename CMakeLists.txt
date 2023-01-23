@@ -45,7 +45,7 @@ if(WIN32)
     target_link_libraries(tecmp2plp delayimp)
 endif()
 
-install(TARGETS tecmp_converter bmw_tecmp_converter COMPONENT tecmp_converter)
+install(TARGETS tecmp_converter tecmp2plp COMPONENT tecmp_converter)
 
 if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
     # Testing
