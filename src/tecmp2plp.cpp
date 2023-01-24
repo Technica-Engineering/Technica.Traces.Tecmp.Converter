@@ -74,7 +74,6 @@ int main(int argc, char* argv[]) {
 	parser.helpParams.proglineShowFlags = true;
 
 	args::HelpFlag help(parser, "help", "", { 'h', "help" }, args::Options::HiddenFromUsage);
-	args::ValueFlag<std::string> maparg(parser, "map-file", "Configuration file for channel mapping", { "channel-map" });
 
 	args::Positional<std::string> inarg(parser, "infile", "Input File", args::Options::Required);
 	args::Positional<std::string> outarg(parser, "outfile", "Output File", args::Options::Required);
@@ -101,7 +100,7 @@ int main(int argc, char* argv[]) {
 	file_check.read((char*)&magic, 4);
 	file_check.close();
 
-	PcapngExporter exporter = PcapngExporter(args::get(outarg), maparg.Get());
+	PcapngExporter exporter = PcapngExporter(args::get(outarg), "");
 
 	if (magic == PCAP_NG_MAGIC_NUMBER) {
 		light_pcapng infile = light_pcapng_open(args::get(inarg).c_str(), "rb");
