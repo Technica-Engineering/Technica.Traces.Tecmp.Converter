@@ -9,7 +9,6 @@
 #include <iostream>
 #include <map>
 
-#include <tecmp/tecmp.h>
 #include <light_pcapng_ext.h>
 #include "pcapng_exporter/endianness.h"
 #include "pcapng_exporter/lin.h"
@@ -18,10 +17,6 @@
 #include "pcap.h"
 #include <args.hxx>
 
-//AnAm: NOTE: Since the proper flag could not be found in the
-// TECMP documentation a temporary variable has been generated
-// to provide a temporary logic.
-#define TMP_ERROR_NODE_ACTIVE 0x0002
 #define NANOS_PER_SEC 1000000000
 
 #define PCAP_NG_MAGIC_NUMBER 0x0A0D0D0A
