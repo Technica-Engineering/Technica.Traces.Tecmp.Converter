@@ -53,7 +53,7 @@ void transform(
 	light_packet_header packet_header,
 	const uint8_t* packet_data
 ) {
-	char *data = new char[packet_header.captured_length];
+	uint8_t *data = new uint8_t[packet_header.captured_length];
 	memcpy(data, packet_data, packet_header.captured_length);
 	if (data[12] == 0x99 && data[13] == 0xFE)
 	{
