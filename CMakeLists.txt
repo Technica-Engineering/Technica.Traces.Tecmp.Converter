@@ -30,12 +30,22 @@ target_link_libraries(tecmp_converter
     pcapng_exporter tecmp_library light_pcapng libpcap args)
 target_compile_features(tecmp_converter PRIVATE cxx_std_17)
 
+add_executable(tecmp2plp 
+    "src/tecmp2plp.cpp"
+)
+
+target_link_libraries(tecmp2plp
+    pcapng_exporter light_pcapng libpcap args)
+target_compile_features(tecmp2plp PRIVATE cxx_std_17)
+
 if(WIN32)
     set_target_properties(tecmp_converter PROPERTIES LINK_FLAGS "/DELAYLOAD:wpcap.dll")
     target_link_libraries(tecmp_converter delayimp)
+    set_target_properties(tecmp2plp PROPERTIES LINK_FLAGS "/DELAYLOAD:wpcap.dll")
+    target_link_libraries(tecmp2plp delayimp)
 endif()
 
-install(TARGETS tecmp_converter COMPONENT tecmp_converter)
+install(TARGETS tecmp_converter tecmp2plp COMPONENT tecmp_converter)
 
 if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
     # Testing
