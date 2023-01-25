@@ -60,7 +60,7 @@ void transform(
 		data[12] = 0x20;
 		data[13] = 0x90;
 	}
-	exporter.write_packet(packet_interface, packet_header, packet_data);
+	exporter.write_packet(packet_interface, packet_header, data);
 }
 
 int main(int argc, char* argv[]) {
