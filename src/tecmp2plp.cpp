@@ -69,14 +69,14 @@ int main(int argc, char* argv[]) {
 	LoadNpcapDlls();
 #endif
 
-	args::ArgumentParser parser("This tool is intended for converting TECMP packets to plain PCAPNG packets.");
+	args::ArgumentParser parser("This tool is intended for converting TECMP packets to PLP packets.");
 	parser.helpParams.showTerminator = false;
 	parser.helpParams.proglineShowFlags = true;
 
 	args::HelpFlag help(parser, "help", "", { 'h', "help" }, args::Options::HiddenFromUsage);
 
-	args::Positional<std::string> inarg(parser, "infile", "Input File", args::Options::Required);
-	args::Positional<std::string> outarg(parser, "outfile", "Output File", args::Options::Required);
+	args::Positional<std::string> inarg(parser, "infile", "Input File (PCAP or PCAPNG)", args::Options::Required);
+	args::Positional<std::string> outarg(parser, "outfile", "Output File (PCAPNG)", args::Options::Required);
 
 	try
 	{
