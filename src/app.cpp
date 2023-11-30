@@ -93,6 +93,7 @@ void transform(
 				if (header.data_type == TECMP_DATA_CANFD)
 				{
 					can.flags |= CANFD_FDF;
+					can.flags |= data[5] & CANFD_BRS
 					can.flags |= header.data_flags & TMP_ERROR_NODE_ACTIVE ? CANFD_ESI : 0;
 				}
 				memcpy(can.data, data + 5, can.len);
