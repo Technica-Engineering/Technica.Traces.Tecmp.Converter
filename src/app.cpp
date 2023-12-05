@@ -22,6 +22,7 @@
 // TECMP documentation a temporary variable has been generated
 // to provide a temporary logic.
 #define TMP_ERROR_NODE_ACTIVE 0x0002
+#define TMP_BITRATE_SWITCH 0x0010
 #define NANOS_PER_SEC 1000000000
 
 #define PCAP_NG_MAGIC_NUMBER 0x0A0D0D0A
@@ -90,10 +91,11 @@ void transform(
 				struct canfd_frame can = { 0 };
 				can.can_id = ntoh32(*((uint32_t*)data));
 				can.len = data[4];
-				if ((header.data_type == TECMP_DATA_CANFD) &&
-					(header.data_flags & TMP_ERROR_NODE_ACTIVE))
+				if (header.data_type == TECMP_DATA_CANFD)
 				{
-					can.flags |= CANFD_ESI;
+					can.flags |= CANFD_FDF;
+					can.flags |= header.data_flags & TMP_BITRATE_SWITCH ? CANFD_BRS : 0;
+					can.flags |= header.data_flags & TMP_ERROR_NODE_ACTIVE ? CANFD_ESI : 0;
 				}
 				memcpy(can.data, data + 5, can.len);
 				exporter.write_can(hdr, can);
