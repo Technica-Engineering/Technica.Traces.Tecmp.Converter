@@ -58,7 +58,8 @@ void transform(
 	bool tecmp_only,
 	light_packet_interface packet_interface,
 	light_packet_header packet_header,
-	const uint8_t* packet_data
+	const uint8_t* packet_data,
+	bool ignore_replay_data
 ) {
 	int32_t iterator = 0;
 	tecmp_header header;
@@ -74,6 +75,10 @@ void transform(
 	else {
 		// tecmp packet
 		while (res == 0) {
+			if (ignore_replay_data && header.message_type == TECMP_TYPE_REPLAY_DATA) {
+				res = tecmp_next(packet_data, packet_header.captured_length, &iterator, &header, &data);
+				continue;
+			}
 			packet_interface.timestamp_resolution = NANOS_PER_SEC;
 			packet_header.timestamp = tecmp_get_timespec(header);
 
@@ -167,6 +172,7 @@ int main(int argc, char* argv[]) {
 	args::Positional<std::string> inarg(parser, "infile", "Input File", args::Options::Required);
 	args::Positional<std::string> outarg(parser, "outfile", "Output File", args::Options::Required);
 	args::Flag tecmp_only(parser, "tecmp-only", "Only process TECMP packets, drop others", { "tecmp-only" }, args::Options::Single);
+	args::Flag ignore_replay_data(parser, "ignore-replay-data", "Ignore message type replay data", { "ignore-replay-data" }, args::Options::Single);
 
 	try
 	{
@@ -205,7 +211,7 @@ int main(int argc, char* argv[]) {
 		const uint8_t* packet_data = nullptr;
 
 		while (light_read_packet(infile, &packet_interface, &packet_header, &packet_data)) {
-			transform(exporter, tecmp_only.Get(), packet_interface, packet_header, packet_data);
+			transform(exporter, tecmp_only.Get(), packet_interface, packet_header, packet_data, ignore_replay_data.Get());
 		}
 
 		light_pcapng_close(infile);
@@ -231,7 +237,7 @@ int main(int argc, char* argv[]) {
 			packet_header.timestamp.tv_sec = pkthdr.ts.tv_sec;
 			packet_header.timestamp.tv_nsec = pkthdr.ts.tv_usec * 1000;
 
-			transform(exporter, tecmp_only.Get(), packet_interface, packet_header, packet_data);
+			transform(exporter, tecmp_only.Get(), packet_interface, packet_header, packet_data, ignore_replay_data.Get());
 
 			packet_data = pcap_next(infile, &pkthdr);
 		}
