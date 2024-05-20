@@ -65,7 +65,7 @@ void transform(
 	tecmp_header header;
 	uint8_t* data;
 	int res = tecmp_next(packet_data, packet_header.captured_length, &iterator, &header, &data);
-	drop_replay_data = drop_replay_data && header.message_type == TECMP_TYPE_REPLAY_DATA;
+	bool drop_replay_data_msg = drop_replay_data && header.message_type == TECMP_TYPE_REPLAY_DATA;
 	if (res == EINVAL) {
 		// not a tecmp packet, copy it as it is
 		if (!tecmp_only)
@@ -73,7 +73,7 @@ void transform(
 			exporter.write_packet(packet_interface, packet_header, packet_data);
 		}
 	}
-	else if (!drop_replay_data) {
+	else if (!drop_replay_data_msg) {
 		// tecmp packet
 		while (res == 0) {
 			packet_interface.timestamp_resolution = NANOS_PER_SEC;

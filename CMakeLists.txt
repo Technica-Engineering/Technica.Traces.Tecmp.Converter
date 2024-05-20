@@ -116,4 +116,17 @@ if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME AND BUILD_TESTING)
                 "${CMAKE_CURRENT_LIST_DIR}/tests/results/mapped/${tecmp_only_test}.pcapng"
         )
     endforeach()
+	
+	# drop replay data tests
+    list(APPEND drop_replay_data_tests "tecmp_replay_data")
+
+    foreach(drop_replay_data_test "${drop_replay_data_tests}")
+        add_test(
+            NAME "${drop_replay_data_test}.drop_replay_data"
+            COMMAND tecmp_converter "--tecmp-only" 
+			    "--drop-replay-data"
+                "${CMAKE_CURRENT_LIST_DIR}/tests/input/${drop_replay_data_test}.pcapng"
+                "${CMAKE_CURRENT_LIST_DIR}/tests/results/${drop_replay_data_test}.pcapng"
+        )
+    endforeach()
 endif()
