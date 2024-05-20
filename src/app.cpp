@@ -73,7 +73,7 @@ void transform(
 			exporter.write_packet(packet_interface, packet_header, packet_data);
 		}
 	}
-	else if (!drop_replay_data){
+	else if (!drop_replay_data) {
 		// tecmp packet
 		while (res == 0) {
 			packet_interface.timestamp_resolution = NANOS_PER_SEC;
