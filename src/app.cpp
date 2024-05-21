@@ -65,7 +65,6 @@ void transform(
 	tecmp_header header;
 	uint8_t* data;
 	int res = tecmp_next(packet_data, packet_header.captured_length, &iterator, &header, &data);
-	bool drop_replay_data_msg = drop_replay_data && header.message_type == TECMP_TYPE_REPLAY_DATA;
 	if (res == EINVAL) {
 		// not a tecmp packet, copy it as it is
 		if (!tecmp_only)
@@ -73,83 +72,85 @@ void transform(
 			exporter.write_packet(packet_interface, packet_header, packet_data);
 		}
 	}
-	else if (!drop_replay_data_msg) {
-		// tecmp packet
-		while (res == 0) {
-			packet_interface.timestamp_resolution = NANOS_PER_SEC;
-			packet_header.timestamp = tecmp_get_timespec(header);
+	// if we need to drop replay data
+	if (drop_replay_data && header.message_type == TECMP_TYPE_REPLAY_DATA) {
+		return;
+	}
+	// tecmp packet
+	while (res == 0) {
+		packet_interface.timestamp_resolution = NANOS_PER_SEC;
+		packet_header.timestamp = tecmp_get_timespec(header);
 
-			frame_header hdr = { 0 };
-			hdr.channel_id = header.channel_id;
-			hdr.timestamp_resolution = packet_interface.timestamp_resolution;
-			hdr.timestamp = packet_header.timestamp;
-			auto tx = (header.data_flags & 0x4000) != 0;
-			hdr.flags = tx ? 2 : 1;
-			hdr.queue = tx ? 1 : 0;
+		frame_header hdr = { 0 };
+		hdr.channel_id = header.channel_id;
+		hdr.timestamp_resolution = packet_interface.timestamp_resolution;
+		hdr.timestamp = packet_header.timestamp;
+		auto tx = (header.data_flags & 0x4000) != 0;
+		hdr.flags = tx ? 2 : 1;
+		hdr.queue = tx ? 1 : 0;
 
-			// append packet_header info
-			// in case of can, lin or ethernet packets, drop tecmp header
-			if (header.data_type == TECMP_DATA_CAN || header.data_type == TECMP_DATA_CANFD) {
-				struct canfd_frame can = { 0 };
-				can.can_id = ntoh32(*((uint32_t*)data));
-				can.len = data[4];
-				if (header.data_type == TECMP_DATA_CANFD)
-				{
-					can.flags |= CANFD_FDF;
-					can.flags |= header.data_flags & TMP_BITRATE_SWITCH ? CANFD_BRS : 0;
-					can.flags |= header.data_flags & TMP_ERROR_NODE_ACTIVE ? CANFD_ESI : 0;
-				}
-				memcpy(can.data, data + 5, can.len);
-				exporter.write_can(hdr, can);
-			}
-			else if (header.data_type == TECMP_DATA_LIN)
+		// append packet_header info
+		// in case of can, lin or ethernet packets, drop tecmp header
+		if (header.data_type == TECMP_DATA_CAN || header.data_type == TECMP_DATA_CANFD) {
+			struct canfd_frame can = { 0 };
+			can.can_id = ntoh32(*((uint32_t*)data));
+			can.len = data[4];
+			if (header.data_type == TECMP_DATA_CANFD)
 			{
-				uint8_t len = data[1];
-				lin_frame lin;
-				lin.pid = data[0];
-				lin.payload_length = len;
-				if (len) {
-					memcpy(lin.data, data + 2, len);
-					lin.checksum = data[len + 2];
-				}
-				else
-				{
-					lin.errors |= LIN_ERROR_NOSLAVE;
-				}
-				exporter.write_lin(hdr, lin);
+				can.flags |= CANFD_FDF;
+				can.flags |= header.data_flags & TMP_BITRATE_SWITCH ? CANFD_BRS : 0;
+				can.flags |= header.data_flags & TMP_ERROR_NODE_ACTIVE ? CANFD_ESI : 0;
 			}
-			else if (header.data_type == TECMP_DATA_ETHERNET)
-			{
-				std::vector<uint8_t>frame(data, data + header.length);
-				exporter.write_ethernet(hdr, frame);
-			}
-			else if (header.data_type == TECMP_DATA_FLEXRAY)
-			{
-				flexray_frame fr;
-				fr.channel = 0;
-				fr.err_flags = 0;
-				fr.fr_flags =
-					(header.data_flags & 1 ? 0 : FR_NFI) |
-					(header.data_flags & 2 ? FR_STFI : 0) |
-					(header.data_flags & 4 ? FR_SFI : 0) |
-					(header.data_flags & 16 ? FR_PPI : 0);
-
-				fr.cc = data[0];
-				fr.fid = ntoh16(*((uint16_t*)(data + 1)));
-				fr.hcrc = 0;
-				uint8_t len = data[3];
-				fr.len = len / 2;
-				memcpy(fr.data, data + 4, len);
-
-				exporter.write_flexray(hdr, fr);
+			memcpy(can.data, data + 5, can.len);
+			exporter.write_can(hdr, can);
+		}
+		else if (header.data_type == TECMP_DATA_LIN)
+		{
+			uint8_t len = data[1];
+			lin_frame lin;
+			lin.pid = data[0];
+			lin.payload_length = len;
+			if (len) {
+				memcpy(lin.data, data + 2, len);
+				lin.checksum = data[len + 2];
 			}
 			else
 			{
-				exporter.write_packet(header.channel_id, packet_interface, packet_header, packet_data);
+				lin.errors |= LIN_ERROR_NOSLAVE;
 			}
-			res = tecmp_next(packet_data, packet_header.captured_length, &iterator, &header, &data);
-
+			exporter.write_lin(hdr, lin);
 		}
+		else if (header.data_type == TECMP_DATA_ETHERNET)
+		{
+			std::vector<uint8_t>frame(data, data + header.length);
+			exporter.write_ethernet(hdr, frame);
+		}
+		else if (header.data_type == TECMP_DATA_FLEXRAY)
+		{
+			flexray_frame fr;
+			fr.channel = 0;
+			fr.err_flags = 0;
+			fr.fr_flags =
+				(header.data_flags & 1 ? 0 : FR_NFI) |
+				(header.data_flags & 2 ? FR_STFI : 0) |
+				(header.data_flags & 4 ? FR_SFI : 0) |
+				(header.data_flags & 16 ? FR_PPI : 0);
+
+			fr.cc = data[0];
+			fr.fid = ntoh16(*((uint16_t*)(data + 1)));
+			fr.hcrc = 0;
+			uint8_t len = data[3];
+			fr.len = len / 2;
+			memcpy(fr.data, data + 4, len);
+
+			exporter.write_flexray(hdr, fr);
+		}
+		else
+		{
+			exporter.write_packet(header.channel_id, packet_interface, packet_header, packet_data);
+		}
+		res = tecmp_next(packet_data, packet_header.captured_length, &iterator, &header, &data);
+
 	}
 }
 
