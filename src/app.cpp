@@ -216,7 +216,13 @@ int main(int argc, char* argv[]) {
 	}
 	else if (magic == PCAP_MAGIC_NUMBER || magic == PCAP_MAGIC_NUMBER_LITTLE_ENDIAN) {
 		char errbuf[PCAP_ERRBUF_SIZE];
-		pcap_t* infile = pcap_open_offline(args::get(inarg).c_str(), errbuf);
+
+		pcap_t* infile;
+#if defined(PCAP_TSTAMP_PRECISION_NANO)
+		infile = pcap_open_offline_with_tstamp_precision(args::get(inarg).c_str(), PCAP_TSTAMP_PRECISION_NANO, errbuf);
+#else
+		infile = pcap_open_offline(args::get(inarg).c_str(), errbuf);
+#endif
 		int link_layer = pcap_datalink(infile);
 		if (!infile) {
 			std::cerr << "Unable to open: " << args::get(inarg) << std::endl;
