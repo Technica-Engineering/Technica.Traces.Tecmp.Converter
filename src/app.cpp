@@ -22,16 +22,16 @@
 // TECMP documentation a temporary variable has been generated
 // to provide a temporary logic.
 #define TMP_ERROR_NODE_ACTIVE 0x0002
-#define TMP_ERROR_MESSAGE = 0x0008
+#define TMP_ERROR_MESSAGE 0x0008
 #define TMP_BITRATE_SWITCH 0x0010
 // The following fields must be shifted by 1 bit in CAN-FD frames
-#define TMP_BITSTUFF_ERROR = 0x0010
-#define TMP_CRC_DEL_ERROR = 0x0020
-#define TMP_ACK_DEL_ERRoR = 0x0040
-#define TMP_EOF_ERROR = 0x0080
+#define TMP_BITSTUFF_ERROR 0x0010
+#define TMP_CRC_DEL_ERROR 0x0020
+#define TMP_ACK_DEL_ERRoR 0x0040
+#define TMP_EOF_ERROR 0x0080
 // No more bitshifting required
-#define TMP_CRC_ERROR = 0x2000
-#define TMP_OVERFLOW = 0x8000
+#define TMP_CRC_ERROR 0x2000
+#define TMP_OVERFLOW 0x8000
 #define NANOS_PER_SEC 1000000000
 
 #define PCAP_NG_MAGIC_NUMBER 0x0A0D0D0A
@@ -62,20 +62,18 @@ bool LoadNpcapDlls()
 }
 #endif
 
-uint8_t* create_can_error_frame(uint16_t flags, bool is_canfd) {
-	char* result = char[8];
+void create_can_error_frame(uint8_t* data, uint16_t flags, bool is_canfd) {
 	bool overflow = (flags & TMP_OVERFLOW) != 0;
 	bool tx = (flags & 0x4000) != 0;
 	int bitshift = is_canfd ? 1 : 0;
 	if (overflow) {
-		result[1] |= tx ? 0x02 : 0x01;
+		data[1] |= tx ? 0x02 : 0x01;
 	}
-	result[2] |= (flags & (TMP_BITSTUFF_ERROR << bitshift)) != 0 ? 0x04 : 0;
-	result[3] |= (flags & TMP_CRC_ERROR) != 0 ? 0x08 : 0;
-	result[3] |= (flags & (TMP_CRC_DEL_ERROR << bitshift)) != 0 ? 0x18 : 0;
-	result[3] |= (flags & (TMP_ACK_DEL_ERRoR << bitshift)) != 0 ? 0x1B : 0;
-	result[3] |= (flags & (TMP_EOF_ERROR << bitshift)) != 0 ? 0x1A : 0;
-	return result;
+	data[2] |= (flags & (TMP_BITSTUFF_ERROR << bitshift)) != 0 ? 0x04 : 0;
+	data[3] |= (flags & TMP_CRC_ERROR) != 0 ? 0x08 : 0;
+	data[3] |= (flags & (TMP_CRC_DEL_ERROR << bitshift)) != 0 ? 0x18 : 0;
+	data[3] |= (flags & (TMP_ACK_DEL_ERRoR << bitshift)) != 0 ? 0x1B : 0;
+	data[3] |= (flags & (TMP_EOF_ERROR << bitshift)) != 0 ? 0x1A : 0;
 }
 
 void transform(
@@ -125,14 +123,12 @@ void transform(
 				can.flags |= header.data_flags & TMP_BITRATE_SWITCH ? CANFD_BRS : 0;
 				can.flags |= header.data_flags & TMP_ERROR_NODE_ACTIVE ? CANFD_ESI : 0;
 			}
-			if (header.data_flags & TMP_ERROR_MESSAGE > 0)
-			{
+			if ((header.data_flags & TMP_ERROR_MESSAGE) != 0) {
 				can.can_id |= 0x20000000;
-				can.length = 8;
-				can.data = create_can_error_frame(header.data_flags, header.data_type == TECMP_DATA_CANFD));
+				can.len = 8;
+				create_can_error_frame(can.data, header.data_flags, header.data_type == TECMP_DATA_CANFD);
 			}
-			else
-			{
+			else {
 				can.len = data[4];
 				memcpy(can.data, data + 5, can.len);
 			}
