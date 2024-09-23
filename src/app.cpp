@@ -62,18 +62,28 @@ bool LoadNpcapDlls()
 }
 #endif
 
-void create_can_error_frame(uint8_t* data, uint16_t flags, bool is_canfd) {
+uint32_t create_can_error_frame(uint8_t* data, uint16_t flags, bool is_canfd) {
+	uint32_t can_id = 0x20000000;
 	bool overflow = (flags & TMP_OVERFLOW) != 0;
 	bool tx = (flags & 0x4000) != 0;
 	int bitshift = is_canfd ? 1 : 0;
 	if (overflow) {
 		data[1] |= tx ? 0x02 : 0x01;
+		can_id |= 0x00000004;
 	}
 	data[2] |= (flags & (TMP_BITSTUFF_ERROR << bitshift)) != 0 ? 0x04 : 0;
 	data[3] |= (flags & TMP_CRC_ERROR) != 0 ? 0x08 : 0;
 	data[3] |= (flags & (TMP_CRC_DEL_ERROR << bitshift)) != 0 ? 0x18 : 0;
 	data[3] |= (flags & (TMP_ACK_DEL_ERRoR << bitshift)) != 0 ? 0x1B : 0;
 	data[3] |= (flags & (TMP_EOF_ERROR << bitshift)) != 0 ? 0x1A : 0;
+	if ((data[2] != 0) || (data[3] != 0)) {
+		can_id |= 0x00000008;
+	}
+	return can_id;
+	{
+		/* code */
+	}
+	
 }
 
 void transform(
@@ -124,9 +134,8 @@ void transform(
 				can.flags |= header.data_flags & TMP_ERROR_NODE_ACTIVE ? CANFD_ESI : 0;
 			}
 			if ((header.data_flags & TMP_ERROR_MESSAGE) != 0) {
-				can.can_id |= 0x20000000;
 				can.len = 8;
-				create_can_error_frame(can.data, header.data_flags, header.data_type == TECMP_DATA_CANFD);
+				can.can_id = create_can_error_frame(can.data, header.data_flags, header.data_type == TECMP_DATA_CANFD);
 			}
 			else {
 				can.len = data[4];
