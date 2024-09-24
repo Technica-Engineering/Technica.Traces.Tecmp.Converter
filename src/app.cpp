@@ -64,13 +64,7 @@ bool LoadNpcapDlls()
 
 uint32_t create_can_error_frame(uint8_t* data, uint16_t flags, bool is_canfd) {
 	uint32_t can_id = 0x20000000;
-	bool overflow = (flags & TMP_OVERFLOW) != 0;
-	bool tx = (flags & 0x4000) != 0;
 	int bitshift = is_canfd ? 1 : 0;
-	if (overflow) {
-		data[1] |= tx ? 0x02 : 0x01;
-		can_id |= 0x00000004;
-	}
 	data[2] |= (flags & (TMP_BITSTUFF_ERROR << bitshift)) != 0 ? 0x04 : 0;
 	data[3] |= (flags & TMP_CRC_ERROR) != 0 ? 0x08 : 0;
 	data[3] |= (flags & (TMP_CRC_DEL_ERROR << bitshift)) != 0 ? 0x18 : 0;
@@ -80,10 +74,6 @@ uint32_t create_can_error_frame(uint8_t* data, uint16_t flags, bool is_canfd) {
 		can_id |= 0x00000008;
 	}
 	return can_id;
-	{
-		/* code */
-	}
-	
 }
 
 void transform(
