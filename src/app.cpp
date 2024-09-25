@@ -123,7 +123,8 @@ void transform(
 				can.flags |= header.data_flags & TMP_BITRATE_SWITCH ? CANFD_BRS : 0;
 				can.flags |= header.data_flags & TMP_ERROR_NODE_ACTIVE ? CANFD_ESI : 0;
 			}
-			if ((header.data_flags & TMP_ERROR_MESSAGE) != 0) {
+			if ((header.data_flags & (TMP_ERROR_MESSAGE | TMP_BITSTUFF_ERROR |
+			TMP_ACK_DEL_ERRoR | TMP_CRC_DEL_ERROR | TMP_CRC_ERROR | TMP_EOF_ERROR)) != 0) {
 				can.len = 8;
 				can.can_id = create_can_error_frame(can.data, header.data_flags, header.data_type == TECMP_DATA_CANFD);
 			}
