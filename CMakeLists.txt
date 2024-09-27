@@ -79,6 +79,7 @@ if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME AND BUILD_TESTING)
     list(APPEND pcap_tests "tecmp_lin_messages_pcap")
     list(APPEND pcap_tests "tecmp_fr_null_frame_pcap")
     list(APPEND pcap_tests "tecmp_fr_sync_frame_pcap")
+    list(APPEND pcap_tests "can_error_frames")
 
     foreach(pcap_test ${pcap_tests})
         get_filename_component(param ${pcap_test} NAME)
