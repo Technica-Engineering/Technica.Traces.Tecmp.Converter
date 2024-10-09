@@ -117,6 +117,8 @@ void transform(
 		if (header.data_type == TECMP_DATA_CAN || header.data_type == TECMP_DATA_CANFD) {
 			struct canfd_frame can = { 0 };
 			can.can_id = ntoh32(*((uint32_t*)data));
+			// Initialize data
+			memset(can.data, 0, sizeof(can.data));
 			if (header.data_type == TECMP_DATA_CANFD)
 			{
 				can.flags |= CANFD_FDF;
