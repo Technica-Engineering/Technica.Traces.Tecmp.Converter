@@ -27,7 +27,7 @@
 // The following fields must be shifted by 1 bit in CAN-FD frames
 #define TMP_BITSTUFF_ERROR 0x0010
 #define TMP_CRC_DEL_ERROR 0x0020
-#define TMP_ACK_DEL_ERROR 0x0040
+#define TMP_ACK_DEL_ERRoR 0x0040
 #define TMP_EOF_ERROR 0x0080
 // No more bitshifting required
 #define TMP_CRC_ERROR 0x2000
@@ -68,7 +68,7 @@ uint32_t create_can_error_frame(uint8_t* data, uint16_t flags, bool is_canfd) {
 	data[2] |= (flags & (TMP_BITSTUFF_ERROR << bitshift)) != 0 ? 0x04 : 0;
 	data[3] |= (flags & TMP_CRC_ERROR) != 0 ? 0x08 : 0;
 	data[3] |= (flags & (TMP_CRC_DEL_ERROR << bitshift)) != 0 ? 0x18 : 0;
-	data[3] |= (flags & (TMP_ACK_DEL_ERROR << bitshift)) != 0 ? 0x1B : 0;
+	data[3] |= (flags & (TMP_ACK_DEL_ERRoR << bitshift)) != 0 ? 0x1B : 0;
 	data[3] |= (flags & (TMP_EOF_ERROR << bitshift)) != 0 ? 0x1A : 0;
 	if ((data[2] != 0) || (data[3] != 0)) {
 		can_id |= 0x00000008;
@@ -124,16 +124,9 @@ void transform(
 				can.flags |= header.data_flags & TMP_ERROR_NODE_ACTIVE ? CANFD_ESI : 0;
 			}
 			if ((header.data_flags & (TMP_ERROR_MESSAGE | TMP_BITSTUFF_ERROR |
-				TMP_ACK_DEL_ERROR | TMP_CRC_DEL_ERROR | TMP_CRC_ERROR | TMP_EOF_ERROR)) != 0) {
+			TMP_ACK_DEL_ERRoR | TMP_CRC_DEL_ERROR | TMP_CRC_ERROR | TMP_EOF_ERROR)) != 0) {
 				can.len = 8;
-				// If the data type is CAN-FD, force the frame to be a Classical CAN error frame
-				bool is_canfd = header.data_type == TECMP_DATA_CANFD;
-
-				if (is_canfd) {
-					const uint8_t CANFD_TO_CAN_ERROR_MASK = 0x02;
-					can.flags &= CANFD_TO_CAN_ERROR_MASK;
-				}
-				can.can_id = create_can_error_frame(can.data, header.data_flags, is_canfd);
+				can.can_id = create_can_error_frame(can.data, header.data_flags, header.data_type == TECMP_DATA_CANFD);
 			}
 			else {
 				can.len = data[4];
