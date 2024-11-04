@@ -130,8 +130,7 @@ void transform(
 				can.len = 8;
 				can.can_id = get_can_error_id(can.data, header.data_flags, header.data_type == TECMP_DATA_CANFD);
 			}
-			if (header.data_type == TECMP_DATA_CANFD)
-			{
+			else if (header.data_type == TECMP_DATA_CANFD) {
 				can.flags |= CANFD_FDF;
 				can.flags |= header.data_flags & TMP_BITRATE_SWITCH ? CANFD_BRS : 0;
 				can.flags |= header.data_flags & TMP_ERROR_NODE_ACTIVE ? CANFD_ESI : 0;
