@@ -119,20 +119,25 @@ void transform(
 			can.can_id = ntoh32(*((uint32_t*)data));
 			// Initialize data
 			memset(can.data, 0, sizeof(can.data));
-			if ((header.data_flags & (TMP_ERROR_MESSAGE | TMP_BITSTUFF_ERROR |
-				TMP_ACK_DEL_ERROR | TMP_CRC_DEL_ERROR | TMP_CRC_ERROR | TMP_EOF_ERROR)) != 0) {
+
+			int bitshift = (header.data_type == TECMP_DATA_CANFD) ? 1 : 0;
+			bool has_error = ((header.data_flags & (TMP_ERROR_MESSAGE | TMP_BITSTUFF_ERROR << bitshift |
+				TMP_ACK_DEL_ERROR << bitshift | TMP_CRC_DEL_ERROR << bitshift |
+				TMP_CRC_ERROR | TMP_EOF_ERROR << bitshift)) != 0);
+
+			if (has_error) {
 				can.len = 8;
 				can.can_id = get_can_error_id(can.data, header.data_flags, header.data_type == TECMP_DATA_CANFD);
-			}
-			else if (header.data_type == TECMP_DATA_CANFD)
-			{
-				can.flags |= CANFD_FDF;
-				can.flags |= header.data_flags & TMP_BITRATE_SWITCH ? CANFD_BRS : 0;
-				can.flags |= header.data_flags & TMP_ERROR_NODE_ACTIVE ? CANFD_ESI : 0;
 			}
 			else {
 				can.len = data[4];
 				memcpy(can.data, data + 5, can.len);
+
+				if (header.data_type == TECMP_DATA_CANFD) {
+					can.flags |= CANFD_FDF;
+					can.flags |= (header.data_flags & TMP_BITRATE_SWITCH) ? CANFD_BRS : 0;
+					can.flags |= (header.data_flags & TMP_ERROR_NODE_ACTIVE) ? CANFD_ESI : 0;
+				}
 			}
 			exporter.write_can(hdr, can);
 		}
