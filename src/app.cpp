@@ -21,6 +21,7 @@
 //AnAm: NOTE: Since the proper flag could not be found in the
 // TECMP documentation a temporary variable has been generated
 // to provide a temporary logic.
+#define TMP_ACK_FLAG 0x0001
 #define TMP_ERROR_NODE_ACTIVE 0x0002
 #define TMP_ERROR_MESSAGE 0x0008
 #define TMP_BITRATE_SWITCH 0x0010
@@ -70,6 +71,7 @@ static uint32_t get_can_error_id(uint8_t* data, uint16_t flags, bool is_canfd) {
 	data[3] |= (flags & (TMP_CRC_DEL_ERROR << bitshift)) != 0 ? 0x18 : 0;
 	data[3] |= (flags & (TMP_ACK_DEL_ERROR << bitshift)) != 0 ? 0x1B : 0;
 	data[3] |= (flags & (TMP_EOF_ERROR << bitshift)) != 0 ? 0x1A : 0;
+	data[3] |= (flags & TMP_ACK_FLAG) == 0 ? 0x19 : 0;
 	if ((data[2] != 0) || (data[3] != 0)) {
 		can_id |= 0x00000008;
 	}
@@ -121,9 +123,16 @@ void transform(
 			memset(can.data, 0, sizeof(can.data));
 
 			int bitshift = (header.data_type == TECMP_DATA_CANFD) ? 1 : 0;
-			bool has_error = ((header.data_flags & (TMP_ERROR_MESSAGE | TMP_BITSTUFF_ERROR << bitshift |
-				TMP_ACK_DEL_ERROR << bitshift | TMP_CRC_DEL_ERROR << bitshift |
-				TMP_CRC_ERROR | TMP_EOF_ERROR << bitshift)) != 0);
+
+			const int errorFlags = TMP_ERROR_MESSAGE |
+				(TMP_BITSTUFF_ERROR << bitshift) |
+				(TMP_ACK_DEL_ERROR << bitshift) |
+				(TMP_CRC_DEL_ERROR << bitshift) |
+				TMP_CRC_ERROR |
+				(TMP_EOF_ERROR << bitshift);
+
+			bool has_error = (header.data_flags & errorFlags) != 0 ||
+				(header.data_flags & TMP_ACK_FLAG) == 0;
 
 			if (has_error) {
 				can.len = 8;
