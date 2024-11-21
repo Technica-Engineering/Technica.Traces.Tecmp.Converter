@@ -192,7 +192,7 @@ void transform(
 			if ((header.data_flags & 0x08) > 0)
 			{
 				fr.type = FR_TYPE_SYMBOL;
-				fr.err_flags = 0x32; // WUS active bits
+				fr.symbol_length = 0x32; // WUS active bits
 			}
 			else
 			{
