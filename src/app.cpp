@@ -66,14 +66,18 @@ bool LoadNpcapDlls()
 static uint32_t get_can_error_id(uint8_t* data, uint16_t flags, bool is_canfd) {
 	uint32_t can_id = 0x20000000;
 	int bitshift = is_canfd ? 1 : 0;
+	bool acked = (flags & TMP_ACK_FLAG) == 0;
 	data[2] |= (flags & (TMP_BITSTUFF_ERROR << bitshift)) != 0 ? 0x04 : 0;
 	data[3] |= (flags & TMP_CRC_ERROR) != 0 ? 0x08 : 0;
 	data[3] |= (flags & (TMP_CRC_DEL_ERROR << bitshift)) != 0 ? 0x18 : 0;
 	data[3] |= (flags & (TMP_ACK_DEL_ERROR << bitshift)) != 0 ? 0x1B : 0;
 	data[3] |= (flags & (TMP_EOF_ERROR << bitshift)) != 0 ? 0x1A : 0;
-	data[3] |= (flags & TMP_ACK_FLAG) == 0 ? 0x19 : 0;
+	data[3] |= acked ? 0x19 : 0;
 	if ((data[2] != 0) || (data[3] != 0)) {
 		can_id |= 0x00000008;
+	}
+	if (acked) {
+		can_id |= 0x20;
 	}
 	return can_id;
 }
