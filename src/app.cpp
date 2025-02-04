@@ -168,7 +168,9 @@ void transform(
 		}
 		else if (header.data_type == TECMP_DATA_ETHERNET)
 		{
-			std::vector<uint8_t>frame(data, data + header.length);
+			// Build a vector from the input data,
+			// omitting the final 4 bytes that contain the Ethernet TECMP Frame Check Sequence (FCS).
+			std::vector<uint8_t> frame(data, data + header.length - 4);
 			exporter.write_ethernet(hdr, frame);
 		}
 		else if (header.data_type == TECMP_DATA_FLEXRAY)
