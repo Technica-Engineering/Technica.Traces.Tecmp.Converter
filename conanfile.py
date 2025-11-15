@@ -14,7 +14,7 @@ class PkgRecipe(ConanFile):
     exports_sources = "CMakeLists.txt", "src/*"
 
     def layout(self):
-        cmake_layout(self)
+        cmake_layout(self, "Ninja")
 
     def requirements(self):
         self.requires("libpcap/1.10.5")
