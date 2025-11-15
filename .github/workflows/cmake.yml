@@ -17,18 +17,9 @@ jobs:
       - name: Checkout submodules
         run: git submodule update --init --recursive
 
-      - name: Install (ubuntu)
-        if: matrix.os == 'ubuntu-20.04'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libpcap-dev
-
-      - name: Install (macos)
-        if: matrix.os == 'macos-latest'
-        run: brew install libpcap
-
       - name: Build
         run: |
+          pipx install conan
           conan build . -s:build_type=Release
           cmake --install build --prefix dist --component tecmp_converter
 
