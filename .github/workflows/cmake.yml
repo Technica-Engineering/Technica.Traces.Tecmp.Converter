@@ -2,10 +2,6 @@ name: CMake
 
 on: [push, pull_request, fork, workflow_dispatch]
 
-env:
-  # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
-  BUILD_TYPE: Release
-
 jobs:
   build:
     runs-on: ${{matrix.os}}
@@ -13,51 +9,29 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: ubuntu-20.04
+          - os: ubuntu-22.04
           - os: windows-latest
           - os: macos-latest
     steps:
-    - uses: actions/checkout@v4
-    - name: Checkout submodules
-      run: git submodule update --init --recursive
+      - uses: actions/checkout@v4
+      - name: Checkout submodules
+        run: git submodule update --init --recursive
 
-    - name: Install (ubuntu)
-      if: matrix.os == 'ubuntu-20.04'
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y libpcap-dev
-        
-    - name: Install (windows)
-      if: matrix.os == 'windows-latest'
-      run:  |
-            choco upgrade chocolatey -version 1.4.0 -allow-downgrade -y
-            choco install npcap --version 0.86 -y
-        
-    - name: Install (macos)
-      if: matrix.os == 'macos-latest'
-      run: brew install libpcap
+      - name: Build
+        run: |
+          pipx install conan
+          conan profile detect
+          conan build . -s:build_type=Release --build missing
+          cmake --install build/Release --prefix dist --component tecmp_converter
 
-    - name: Create Build Environment
-      run: cmake -E make_directory build
+      - name: Test
+        working-directory: build
+        run: |
+          ctest -C Release --output-on-failure
+          git diff --exit-code
 
-    - name: Configure CMake
-      working-directory: build
-      run: cmake .. -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
-
-    - name: Build
-      working-directory: build
-      run: |
-        cmake --build . --config ${{env.BUILD_TYPE}}
-        cmake --install . --prefix ../dist --component tecmp_converter
-
-    - name: Test
-      working-directory: build
-      run: |
-        ctest -C ${{env.BUILD_TYPE}} --output-on-failure
-        git diff --exit-code
-        
-    - name: 'Upload Artifacts'
-      uses: actions/upload-artifact@v4
-      with:
-        name: ${{matrix.os}} artifacts
-        path: dist
+      - name: "Upload Artifacts"
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{matrix.os}} artifacts
+          path: dist

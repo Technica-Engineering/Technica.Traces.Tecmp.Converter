@@ -10,9 +10,7 @@ This tool is intended for converting TECMP packets to plain PCAPNG packets.
 ### Build
 
 ```sh
-mkdir build
-cd build
-cmake ..
+conan build .
 ```
 
 # License
