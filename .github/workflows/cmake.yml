@@ -21,7 +21,7 @@ jobs:
         run: |
           pipx install conan
           conan profile detect
-          conan build . -s:build_type=Release
+          conan build . -s:build_type=Release --build missing
           cmake --install build --prefix dist --component tecmp_converter
 
       - name: Test
