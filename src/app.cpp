@@ -86,6 +86,8 @@ void transform(
 	PcapngExporter exporter,
 	bool tecmp_only,
 	bool drop_replay_data,
+	time_t &offset,
+	bool &offset_calculated,
 	light_packet_interface packet_interface,
 	light_packet_header packet_header,
 	const uint8_t* packet_data
@@ -108,7 +110,17 @@ void transform(
 	// tecmp packet
 	while (res == 0) {
 		packet_interface.timestamp_resolution = NANOS_PER_SEC;
+		// Ignored packets already passed, if to calculate offset here is the time
+		if (!offset_calculated) {
+			timespec target = tecmp_get_timespec(header);
+			offset = packet_header.timestamp.tv_sec - target.tv_sec;
+			offset_calculated = true;
+			std::cout << "First TECMP packet processed, and offset calculated to be: " << offset << std::endl;
+		}
 		packet_header.timestamp = tecmp_get_timespec(header);
+		if (offset_calculated && offset) {
+			packet_header.timestamp.tv_sec += offset;
+		}
 
 		frame_header hdr = { 0 };
 		hdr.channel_id = header.channel_id;
@@ -223,6 +235,8 @@ int main(int argc, char* argv[]) {
 	args::Positional<std::string> outarg(parser, "outfile", "Output File", args::Options::Required);
 	args::Flag tecmp_only(parser, "tecmp-only", "Only process TECMP packets, drop others", { "tecmp-only" }, args::Options::Single);
 	args::Flag drop_replay_data(parser, "drop-replay-data", "Drop replay data messages", { "drop-replay-data" }, args::Options::Single);
+	args::ValueFlag<time_t> tecmp_offset(parser, "offset", "Static offset in seconds applied to TECMP packets", { "offset" }, args::Options::Single);
+	args::Flag time_from_pcap(parser, "time-from-pcap", "Use time from frame header of first TECMP packet to calculate offset, overrides static offset argument", { "time-from-pcap" }, args::Options::Single);
 
 	try
 	{
@@ -242,6 +256,7 @@ int main(int argc, char* argv[]) {
 	// determine file type
 	int magic = 0;
 	std::ifstream file_check;
+	bool offset_calculated = !time_from_pcap.Get();
 	file_check.open(args::get(inarg), std::ios::binary | std::ios::in);
 	file_check.read((char*)&magic, 4);
 	file_check.close();
@@ -261,7 +276,7 @@ int main(int argc, char* argv[]) {
 		const uint8_t* packet_data = nullptr;
 
 		while (light_read_packet(infile, &packet_interface, &packet_header, &packet_data)) {
-			transform(exporter, tecmp_only.Get(), drop_replay_data.Get(), packet_interface, packet_header, packet_data);
+			transform(exporter, tecmp_only.Get(), drop_replay_data.Get(), tecmp_offset.Get(), offset_calculated, packet_interface, packet_header, packet_data);
 		}
 
 		light_pcapng_close(infile);
@@ -287,7 +302,7 @@ int main(int argc, char* argv[]) {
 			packet_header.timestamp.tv_sec = pkthdr.ts.tv_sec;
 			packet_header.timestamp.tv_nsec = pkthdr.ts.tv_usec * 1000;
 
-			transform(exporter, tecmp_only.Get(), drop_replay_data.Get(), packet_interface, packet_header, packet_data);
+			transform(exporter, tecmp_only.Get(), drop_replay_data.Get(), tecmp_offset.Get(), offset_calculated, packet_interface, packet_header, packet_data);
 
 			packet_data = pcap_next(infile, &pkthdr);
 		}
