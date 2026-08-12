@@ -209,10 +209,13 @@ void transform(
 
 			fr.cc = data[0];
 			fr.fid = ntoh16(*((uint16_t*)(data + 1)));
-			fr.hcrc = 0;
 			uint8_t len = data[3];
 			fr.len = len / 2;
 			memcpy(fr.data, data + 4, len);
+			// Header checksum is stored after the payload.
+			fr.hcrc = ntoh16(*((uint16_t*)(data + 4 + len)));
+			// Safeguard rest of frame header against corrupt checksum data, limit to 11 bits
+			fr.hcrc &= 0x7ff;
 
 			exporter.write_flexray(hdr, fr);
 		}
