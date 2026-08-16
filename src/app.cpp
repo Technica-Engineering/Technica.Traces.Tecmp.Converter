@@ -98,7 +98,7 @@ void transform(
 	const uint8_t* packet_data
 ) {
 	int32_t iterator = 0;
-	tecmp_header header;
+	tecmp_header header = { 0 };
 	uint8_t* data;
 	int res = tecmp_next(packet_data, packet_header.captured_length, &iterator, &header, &data);
 	if (res == EINVAL) {
@@ -201,18 +201,34 @@ void transform(
 			flexray_frame fr;
 			fr.channel = 0;
 			fr.err_flags = 0;
-			fr.fr_flags =
-				(header.data_flags & 1 ? 0 : FR_NFI) |
-				(header.data_flags & 2 ? FR_STFI : 0) |
-				(header.data_flags & 4 ? FR_SFI : 0) |
-				(header.data_flags & 16 ? FR_PPI : 0);
 
-			fr.cc = data[0];
-			fr.fid = ntoh16(*((uint16_t*)(data + 1)));
-			fr.hcrc = 0;
-			uint8_t len = data[3];
-			fr.len = len / 2;
-			memcpy(fr.data, data + 4, len);
+			// A FlexRay wake-up (WUS) or collision-avoidance (CAS) symbol carries
+			// no payload, so its TECMP Length field is 0. tecmp_next reports such
+			// a frame as valid with Length == 0, so emit it as a symbol here.
+			if (header.length == 0)
+			{
+				fr.type = FR_TYPE_SYMBOL;
+				fr.fr_flags = 0;
+				fr.cc = 0;
+				fr.fid = 0;
+				fr.hcrc = 0;
+				fr.len = 0;
+			}
+			else
+			{
+				fr.fr_flags =
+					(header.data_flags & 1 ? 0 : FR_NFI) |
+					(header.data_flags & 2 ? FR_STFI : 0) |
+					(header.data_flags & 4 ? FR_SFI : 0) |
+					(header.data_flags & 16 ? FR_PPI : 0);
+
+				fr.cc = data[0];
+				fr.fid = ntoh16(*((uint16_t*)(data + 1)));
+				fr.hcrc = 0;
+				uint8_t len = data[3];
+				fr.len = len / 2;
+				memcpy(fr.data, data + 4, len);
+			}
 
 			exporter.write_flexray(hdr, fr);
 		}

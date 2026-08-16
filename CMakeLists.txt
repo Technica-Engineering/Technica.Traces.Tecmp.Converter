@@ -108,6 +108,16 @@ if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME AND BUILD_TESTING)
         )
     endforeach()
 
+    # FlexRay wake-up symbol test
+    # A TECMP wake-up symbol carries no payload (Length == 0); it must still be
+    # converted to a FlexRay symbol frame instead of producing an empty output.
+    add_test(
+        NAME "convert.tecmp_fr_wakeup"
+        COMMAND tecmp_converter
+            "${CMAKE_CURRENT_LIST_DIR}/tests/input/tecmp_fr_wakeup.pcapng"
+            "${CMAKE_CURRENT_LIST_DIR}/tests/results/tecmp_fr_wakeup.pcapng"
+    )
+
     # TECMP-only tests
     list(APPEND tecmp_only_tests "dirty_tecmp")
 
