@@ -79,7 +79,6 @@ static uint32_t get_can_error_id(uint8_t* data, uint16_t flags, bool is_canfd) {
 	data[3] |= (flags & (TMP_CRC_DEL_ERROR << bitshift)) != 0 ? 0x18 : 0;
 	data[3] |= (flags & (TMP_ACK_DEL_ERROR << bitshift)) != 0 ? 0x1B : 0;
 	data[3] |= (flags & (TMP_EOF_ERROR << bitshift)) != 0 ? 0x1A : 0;
-	data[3] |= is_acked ? 0 : 0x19;
 	if ((data[2] != 0) || (data[3] != 0)) {
 		can_id |= 0x00000008;
 	}
